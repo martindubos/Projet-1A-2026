@@ -1,6 +1,6 @@
-from src.Common.utils import print_timings
-
-
+from src.Model.Player import Player
+from src.Model.Sports import Sport 
+from 
 @print_timings
 def parse_players_csv(filepath: str, sep: str = ";") -> list:
     raise Exception(
