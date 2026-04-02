@@ -22,7 +22,7 @@
 
 ####
 
-from src.Model.Sport import Sport
+from src.Model.Sports import Sport
 from src.Analysis import display_all_competitions
 
 sports_present = [
@@ -31,7 +31,9 @@ sports_present = [
 ]
 
 sport_choisi = input("Sur quel sport souhaitez-vous travailler ?")
-if sport_choisi not in sports_present : 
+if sport_choisi not in sports_present:
     raise Exception("Ce sport n'est pas pris en charge par l'application")
 
-competition_choisie = input("Choisissez une compétiton parmi {display_all_competitions(sport_choisi)}")
+competition_choisie = input(
+    "Choisissez une compétiton parmi {display_all_competitions(sport_choisi)}"
+)
