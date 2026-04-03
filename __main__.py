@@ -1,39 +1,138 @@
-# import pandas as pd
-
-# from src.Parsers.parse_csv import parse_players_csv
-# from src.Analysis.pandas.GoatFinder import find_the_goat_in_df
-# from src.Analysis.homemade.GoatFinder import find_the_goat
-
-# setting = input("Select a setting, 0=pandas-powered, 1=àlamain-powered\n")
-
-# if setting == "0":
-#    players_df = pd.read_csv("./data/players.csv")
-# else:
-#    players = parse_players_csv("./data/players.csv")
-
-# print("Select your journey through the data")
-# print("1 - I want to know who is the greatest football player of all time")
-# input("2 - Just kidding, there's only one option\n")
-
-# if setting == "0":
-#    the_goat = find_the_goat_in_df(players_df)
-# else:
-#    the_goat = find_the_goat(players)
-
-####
-
+import os
+import pickle
 from src.Model.Sports import Sport
-from src.Analysis import display_all_competitions
 
-sports_present = [
-    Sport(name="football", sport_en_equipe=True),
-    Sport(name="tennis", sport_en_equipe=False),
-]
+def sauvegarder_sport(sport: Sport, dossier_obj: str = "objets") -> None:
+    os.makedirs(dossier_obj, exist_ok=True)
+    chemin = os.path.join(dossier_obj, f"{sport.nom.lower()}.p")
+    with open(chemin, "wb") as f:
+        pickle.dump(sport, f)
 
-sport_choisi = input("Sur quel sport souhaitez-vous travailler ?")
-if sport_choisi not in sports_present:
-    raise Exception("Ce sport n'est pas pris en charge par l'application")
+def charger_sport(nom: str, dossier_obj: str = "objets") -> Sport:
+    chemin = os.path.join(dossier_obj, f"{nom.lower()}.p")
+    if os.path.exists(chemin):
+        with open(chemin, "rb") as f:
+            return pickle.load(f)
+    return None
 
-competition_choisie = input(
-    "Choisissez une compétiton parmi {display_all_competitions(sport_choisi)}"
-)
+def main():
+    configs = {
+        "1": ("Tennis", "data/tennis"),
+        "2": ("Football", "data/football_european_leagues"),
+        # "3": ("Basketball", "data/basketball"),
+        # "4": ("Volleyball", "data/volleyball"),
+        # "5": ("LoL", "data/league_of_legends")
+    }
+
+    while True:
+        print("\n" + "="*30)
+        print("=== MENU PRINCIPAL ===")
+        print("="*30)
+        print("1. Charger les donnees CSV")
+        print("2. Consulter des statistiques")
+        print("3. Quitter")
+        
+        choix_menu = input("Que souhaitez-vous faire ? (1/2/3) : ")
+
+        if choix_menu == "3":
+            print("Au revoir !")
+            break
+
+        elif choix_menu == "1":
+            print("\n-- Chargement des donnees --")
+            print("Pour quel sport voulez-vous charger les donnees ?")
+            for key, (nom, _) in configs.items():
+                print(f"{key}. {nom}")
+            print("A. Tous les sports disponibles")
+            
+            choix_sport = input("Votre choix : ").upper()
+            
+            sports_a_charger = []
+            if choix_sport == "A":
+                sports_a_charger = list(configs.values())
+            elif choix_sport in configs:
+                sports_a_charger = [configs[choix_sport]]
+            else:
+                print("Choix invalide.")
+                continue
+
+            for nom, dossier in sports_a_charger:
+                print(f"\nChargement depuis CSV pour {nom}...")
+                nouveau_sport = Sport(nom, dossier)
+                sauvegarder_sport(nouveau_sport)
+                print(f"[{nom}] Les donnees ont ete chargees et sauvegardees.")
+
+        elif choix_menu == "2":
+            print("\n-- Consultation des Statistiques --")
+            print("Choisissez un sport :")
+            for key, (nom, _) in configs.items():
+                print(f"{key}. {nom}")
+            
+            choix_sport = input("Votre choix : ")
+            if choix_sport not in configs:
+                print("Choix invalide.")
+                continue
+                
+            nom_sport = configs[choix_sport][0]
+            
+            # Chargement de l'objet sport memoire
+            sport_obj = charger_sport(nom_sport)
+            if not sport_obj:
+                print(f"Les donnees de {nom_sport} n'ont pas encore ete chargees. Veuillez d'abord choisir l'option 1 du menu.")
+                continue
+                
+            # Sous-menu pour les statistiques
+            print("\nQuel type de statistiques souhaitez-vous consulter ?")
+            print("1. Rechercher les statistiques d'un joueur precis (Ex: Serena Williams)")
+            print("2. Rechercher les statistiques d'une equipe/club (Ex: Arsenal)")
+            print("3. Voir le classement global du sport")
+            print("4. Retour au menu principal")
+            
+            choix_stat = input("Votre choix : ")
+            
+            if choix_stat == "1":
+                nom_joueur = input("\nEntrez le nom du joueur (ou une partie du nom) : ")
+                joueur = sport_obj.get_joueur(nom_joueur)
+                if joueur:
+                    print(f"\n--- Fiche du joueur ---")
+                    print(f"Nom complet: {joueur.nom_complet()}")
+                    if joueur.date_naissance: print(f"Date de naissance: {joueur.date_naissance}")
+                    if joueur.taille: print(f"Taille: {joueur.taille} cm")
+                    print(f"Pays: {joueur.pays}")
+                    print(f"\n>>> STATISTIQUES (2024) :")
+                    for k, v in joueur.statistiques.get(2024, {}).items():
+                        print(f"  - {k} : {v}")
+                else:
+                    print("Joueur introuvable.")
+
+            elif choix_stat == "2":
+                nom_equipe = input("\nEntrez le nom de l'equipe : ")
+                equipe = sport_obj.get_equipe(nom_equipe)
+                if equipe:
+                    print(f"\n--- Fiche de l'equipe ---")
+                    print(f"Nom: {equipe.nom} ({equipe.nom_court})")
+                    print(f"\n>>> STATISTIQUES :")
+                    print(equipe.statistiques)
+                else:
+                    print("Equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
+
+            elif choix_stat == "3":
+                classement = sport_obj.classement
+                if not classement:
+                    print(f"\nAucun classement disponible. Le classement va etre calcule...")
+                    classement = sport_obj.calculer_classement()
+                    
+                print(f"\n--- Classement global pour {nom_sport} (Top 10) ---")
+                top = classement[:10]
+                for i, (id_eq, points) in enumerate(top, 1):
+                    print(f"{i}. ID_{id_eq} : {points} points")
+
+            elif choix_stat == "4":
+                continue
+            else:
+                print("Choix invalide.")
+        else:
+            print("Choix invalide.")
+
+if __name__ == "__main__":
+    main()
