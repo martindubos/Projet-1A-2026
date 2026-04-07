@@ -113,8 +113,8 @@ class TennisWomenPlayerLoader:
 
             res[record["player_id"]] = Player(
                 id=record["player_id"],
-                lastname=record["name_first"],
-                firstname=record["name_last"],
+                lastname=record["name_last"],
+                firstname=record["name_first"],
                 birthdate=birthdate,
                 country=record["ioc"],
                 hand=mapping_hand.get(record.get("hand", "U"), "inconnue"),

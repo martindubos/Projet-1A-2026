@@ -111,8 +111,27 @@ def main():
                 if equipe:
                     print(f"\n--- Fiche de l'equipe ---")
                     print(f"Nom: {equipe.nom} ({equipe.nom_court})")
-                    print(f"\n>>> STATISTIQUES :")
-                    print(equipe.statistiques)
+                    if not equipe.statistiques:
+                        print("\n>>> Aucune statistique disponible pour cette equipe.")
+                    else:
+                        saisons_disponibles = sorted(list(equipe.statistiques.keys()))
+                        print(f"\n>>> Saisons disponibles : {', '.join(map(str, saisons_disponibles))}")
+                        saison_choisie = input("Entrez la saison pour voir les statistiques (ex: 2008/2009) : ")
+                        
+                        saison_cle = saison_choisie
+                        # Convertir en int si possible au cas où la clé est numérique (ex: 2024 au Tennis)
+                        try:
+                            if int(saison_choisie) in equipe.statistiques:
+                                saison_cle = int(saison_choisie)
+                        except ValueError:
+                            pass
+                            
+                        if saison_cle in equipe.statistiques:
+                            print(f"\n>>> STATISTIQUES ({saison_cle}) :")
+                            for k, v in equipe.statistiques[saison_cle].items():
+                                print(f"  - {k} : {v}")
+                        else:
+                            print("Saison invalide ou introuvable.")
                 else:
                     print("Equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
 
