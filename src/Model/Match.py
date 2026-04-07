@@ -30,3 +30,9 @@ class MatchFootball(Match):
         self.saison      = saison
         self.joueurs_dom = joueurs_dom or []
         self.joueurs_ext = joueurs_ext or []
+
+class MatchBasketball(Match):
+    def __init__(self, *args, saison=None, season_type=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.saison = saison
+        self.season_type = season_type

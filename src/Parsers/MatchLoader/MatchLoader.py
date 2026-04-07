@@ -1,6 +1,6 @@
 from .FootballMatchLoader import FootballMatchLoader
 # from .LolMatchLoader import LolMatchLoader
-# from .BasketballMatchLoader import BasketballMatchLoader
+from .BasketballMatchLoader import BasketballMatchLoader
 from .TennisMatchLoader import TennisMatchLoader
 # from .VolleyMatchLoader import VolleyMatchLoader
 
@@ -12,7 +12,7 @@ class MatchLoader():
         elif sport_name == "Tennis":
             return TennisMatchLoader.load_all_match(dossier)
         elif sport_name == "Basketball":
-            return []
+            return BasketballMatchLoader.load_all_match(dossier)
         elif sport_name == "Volleyball":
             return []
         elif sport_name == "LoL":

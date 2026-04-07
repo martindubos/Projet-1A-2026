@@ -1,6 +1,6 @@
 from .FootballTeamLoader import FootballTeamLoader
 # from .LolTeamLoader import LolTeamLoader
-# from .BasketTeamLoader import BasketTeamLoader
+from .BasketTeamLoader import BasketTeamLoader
 # from .VolleyTeamLoader import VolleyTeamLoader
 
 class TeamLoader():
@@ -11,7 +11,7 @@ class TeamLoader():
         elif sport_name == "Tennis":
             return {} # Le tennis n'a pas vraiment d'equipes dans ce dataset
         elif sport_name == "Basketball":
-            return {}
+            return BasketTeamLoader.load_all_team(dossier)
         elif sport_name == "Volleyball":
             return {}
         elif sport_name == "LoL":
