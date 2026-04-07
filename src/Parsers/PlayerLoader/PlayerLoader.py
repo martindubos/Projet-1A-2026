@@ -1,7 +1,7 @@
 from src.Model.Player import Player
 from .FootballPlayerLoader import FootballPlayerLoader
 # from .LolPlayerLoader import LolPlayerLoader
-# from .BasketPlayerLoader import BasketPlayerLoader
+from .BasketPlayerLoader import BasketPlayerLoader
 from .TennisWomenPlayerLoader import TennisWomenPlayerLoader
 from .TennisMenPlayerLoader import TennisMenPlayerLoader
 # from .VolleyPlayerLoader import VolleyPlayerLoader
@@ -18,7 +18,7 @@ class PlayerLoader():
             players.update(TennisWomenPlayerLoader.load_all_player(dossier))
             return players
         elif sport_name == "Basketball":
-            return {}
+            return BasketPlayerLoader.load_all_player(dossier)
         elif sport_name == "Volleyball":
             return {}
         elif sport_name == "LoL":
