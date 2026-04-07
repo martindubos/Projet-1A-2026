@@ -19,7 +19,7 @@ def main():
     configs = {
         "1": ("Tennis", "data/tennis"),
         "2": ("Football", "data/football_european_leagues"),
-        # "3": ("Basketball", "data/basketball"),
+        "3": ("Basketball", "data/basketball"),
         # "4": ("Volleyball", "data/volleyball"),
         # "5": ("LoL", "data/league_of_legends")
     }
