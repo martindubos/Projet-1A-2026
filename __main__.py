@@ -81,12 +81,17 @@ def main():
                 print(f"Les donnees de {nom_sport} n'ont pas encore ete chargees. Veuillez d'abord choisir l'option 1 du menu.")
                 continue
                 
+            ex_joueur = "Novak Djokovic" if nom_sport.lower() == "tennis" else "Lionel Messi" if nom_sport.lower() == "football" else "Joueur Exemple"
+            ex_equipe = "France" if nom_sport.lower() == "tennis" else "Real Madrid" if nom_sport.lower() == "football" else "Equipe Exemple"
+
             # Sous-menu pour les statistiques
             print("\nQuel type de statistiques souhaitez-vous consulter ?")
-            print("1. Rechercher les statistiques d'un joueur precis (Ex: Serena Williams)")
-            print("2. Rechercher les statistiques d'une equipe/club (Ex: Arsenal)")
+            print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
+            print(f"2. Rechercher les statistiques d'une equipe/club (Ex: {ex_equipe})")
             print("3. Voir le classement global du sport")
-            print("4. Retour au menu principal")
+            print("4. Comparer deux joueurs / equipes (Face-a-Face)")
+            print("5. Afficher les joueurs/equipes par pays d'origine")
+            print("6. Retour au menu principal")
             
             choix_stat = input("Votre choix : ")
             
@@ -147,6 +152,79 @@ def main():
                     print(f"{i}. ID_{id_eq} : {points} points")
 
             elif choix_stat == "4":
+                print("\n--- Face-a-Face (Head-to-Head) ---")
+                choix_type = input("Voulez-vous comparer des Joueurs (J) ou des Equipes (E) ? ").upper()
+                if choix_type == 'J':
+                    nom1 = input("Nom du premier joueur : ")
+                    nom2 = input("Nom du deuxieme joueur : ")
+                    entite1 = sport_obj.get_joueur(nom1)
+                    entite2 = sport_obj.get_joueur(nom2)
+                elif choix_type == 'E':
+                    nom1 = input("Nom de la premiere equipe : ")
+                    nom2 = input("Nom de la deuxieme equipe : ")
+                    entite1 = sport_obj.get_equipe(nom1)
+                    entite2 = sport_obj.get_equipe(nom2)
+                else:
+                    print("Choix invalide.")
+                    continue
+                
+                if not entite1 or not entite2:
+                    print("Une ou les deux entites n'ont pas ete trouvees.")
+                    continue
+                
+                id1, id2 = entite1.id, entite2.id
+                nom_entite1 = entite1.nom_complet() if choix_type == 'J' else entite1.nom
+                nom_entite2 = entite2.nom_complet() if choix_type == 'J' else entite2.nom
+                
+                victoires_1, victoires_2, nuls = 0, 0, 0
+                for m in sport_obj.matchs:
+                    if (m.equipe1_id == id1 and m.equipe2_id == id2) or (m.equipe1_id == id2 and m.equipe2_id == id1):
+                        vainqueur = m.vainqueur_id()
+                        if vainqueur == id1:
+                            victoires_1 += 1
+                        elif vainqueur == id2:
+                            victoires_2 += 1
+                        else:
+                            nuls += 1
+                
+                print(f"\n>>> Historique des confrontations :")
+                print(f"{nom_entite1} - {victoires_1} victoire(s)")
+                print(f"{nom_entite2} - {victoires_2} victoire(s)")
+                if nuls > 0:
+                    print(f"Matchs nuls - {nuls}")
+                if (victoires_1 + victoires_2 + nuls) == 0:
+                    print("Aucun match trouve entre ces deux opposants.")
+
+            elif choix_stat == "5":
+                pays_input = input("\nEntrez le nom du pays/nationalite : ").strip()
+                
+                mapping_pays = {
+                    "france": "FRA", "espagne": "ESP", "italie": "ITA", 
+                    "suisse": "SUI", "allemagne": "GER", "angleterre": "ENG", 
+                    "etats-unis": "USA", "usa": "USA", "belgique": "BEL", 
+                    "argentine": "ARG", "bresil": "BRA", "portugal": "POR",
+                    "serbie": "SRB", "croatie": "CRO", "pays-bas": "NED",
+                    "russie": "RUS", "canada": "CAN", "australie": "AUS",
+                    "grece": "GRE", "japon": "JPN", "chine": "CHN"
+                }
+                
+                pays_code = mapping_pays.get(pays_input.lower(), pays_input)
+
+                joueurs_trouves = [j for j in sport_obj.joueurs.values() if j.pays and (pays_input.lower() in str(j.pays).lower() or pays_code.lower() in str(j.pays).lower())]
+                equipes_trouvees = [e for e in sport_obj.equipes.values() if hasattr(e, 'pays_id') and e.pays_id and (pays_input.lower() in str(e.pays_id).lower() or pays_code.lower() in str(e.pays_id).lower())]
+                
+                if joueurs_trouves:
+                    print(f"\n--- Joueurs ({pays_input.capitalize()} / {pays_code.upper()}) ---")
+                    for j in joueurs_trouves:
+                        print(f"- {j.nom_complet()}")
+                if equipes_trouvees:
+                    print(f"\n--- Equipes ({pays_input.capitalize()} / {pays_code.upper()}) ---")
+                    for e in equipes_trouvees:
+                        print(f"- {e.nom}")
+                if not joueurs_trouves and not equipes_trouvees:
+                    print(f"Aucun resultat trouve pour le pays : {pays_input}")
+
+            elif choix_stat == "6":
                 continue
             else:
                 print("Choix invalide.")
