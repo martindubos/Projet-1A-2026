@@ -10,10 +10,10 @@ class FootballPlayerLoader():
         if not os.path.exists(player_file):
             return {}
             
-        df_p = pd.read_csv(player_file)
+        dataframe_joueurs = pd.read_csv(player_file)
         
         res = {}
-        for r in df_p.to_dict("records"):
+        for r in dataframe_joueurs.to_dict("records"):
             # Date de naissance format ex: 1992-02-28 00:00:00
             birthdate = None
             if pd.notna(r.get("birthday")):

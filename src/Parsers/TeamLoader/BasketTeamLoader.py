@@ -9,10 +9,10 @@ class BasketTeamLoader():
         if not os.path.exists(team_file):
             return {}
             
-        df_t = pd.read_csv(team_file)
+        dataframe_equipes = pd.read_csv(team_file)
         
         res = {}
-        for r in df_t.to_dict("records"):
+        for r in dataframe_equipes.to_dict("records"):
             team_id = r.get("id")
             res[team_id] = Team(
                 id=team_id,
@@ -23,22 +23,22 @@ class BasketTeamLoader():
             
         matches_file = os.path.join(dossier, "basketball_game.csv")
         if os.path.exists(matches_file):
-            df_m = pd.read_csv(matches_file)
+            dataframe_matchs = pd.read_csv(matches_file)
             
-            home_wins = df_m[df_m["pts_home"] > df_m["pts_away"]]["team_id_home"].value_counts()
-            away_wins = df_m[df_m["pts_away"] > df_m["pts_home"]]["team_id_away"].value_counts()
+            home_wins = dataframe_matchs[dataframe_matchs["pts_home"] > dataframe_matchs["pts_away"]]["team_id_home"].value_counts()
+            away_wins = dataframe_matchs[dataframe_matchs["pts_away"] > dataframe_matchs["pts_home"]]["team_id_away"].value_counts()
             total_wins = home_wins.add(away_wins, fill_value=0)
             
-            home_games = df_m["team_id_home"].value_counts()
-            away_games = df_m["team_id_away"].value_counts()
+            home_games = dataframe_matchs["team_id_home"].value_counts()
+            away_games = dataframe_matchs["team_id_away"].value_counts()
             total_games = home_games.add(away_games, fill_value=0)
 
-            home_pts = df_m.groupby("team_id_home")["pts_home"].sum()
-            away_pts = df_m.groupby("team_id_away")["pts_away"].sum()
+            home_pts = dataframe_matchs.groupby("team_id_home")["pts_home"].sum()
+            away_pts = dataframe_matchs.groupby("team_id_away")["pts_away"].sum()
             total_pts = home_pts.add(away_pts, fill_value=0)
 
-            home_pts_enc = df_m.groupby("team_id_home")["pts_away"].sum()
-            away_pts_enc = df_m.groupby("team_id_away")["pts_home"].sum()
+            home_pts_enc = dataframe_matchs.groupby("team_id_home")["pts_away"].sum()
+            away_pts_enc = dataframe_matchs.groupby("team_id_away")["pts_home"].sum()
             total_pts_enc = home_pts_enc.add(away_pts_enc, fill_value=0)
 
             stats_df = pd.DataFrame({

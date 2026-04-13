@@ -10,10 +10,10 @@ class BasketPlayerLoader():
         if not os.path.exists(player_file):
             return {}
             
-        df_p = pd.read_csv(player_file)
+        dataframe_joueurs = pd.read_csv(player_file)
         
         res = {}
-        for r in df_p.to_dict("records"):
+        for r in dataframe_joueurs.to_dict("records"):
             birthdate = None
             if pd.notna(r.get("birthdate")):
                 try:

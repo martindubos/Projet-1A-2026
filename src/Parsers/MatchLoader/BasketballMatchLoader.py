@@ -10,8 +10,8 @@ class BasketballMatchLoader():
         if not os.path.exists(matches_file):
             return matchs
             
-        df_m = pd.read_csv(matches_file)
-        for r in df_m.to_dict("records"):
+        dataframe_matchs = pd.read_csv(matches_file)
+        for r in dataframe_matchs.to_dict("records"):
             matchs.append(MatchBasketball(
                 id=r.get("game_id"),
                 equipe1_id=r.get("team_id_home"),

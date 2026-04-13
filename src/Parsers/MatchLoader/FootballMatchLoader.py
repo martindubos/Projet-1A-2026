@@ -9,7 +9,7 @@ class FootballMatchLoader():
         if not os.path.exists(match_file):
             return []
             
-        df_m = pd.read_csv(match_file)
+        dataframe_matchs = pd.read_csv(match_file)
         
         def joueurs(d, prefix):
             return [int(d[f"{prefix}{i}"])
@@ -17,7 +17,7 @@ class FootballMatchLoader():
                     if pd.notna(d.get(f"{prefix}{i}"))]
         
         matchs = []
-        for r in df_m.to_dict("records"):
+        for r in dataframe_matchs.to_dict("records"):
             matchs.append(MatchFootball(
                 id=r.get("id"),
                 equipe1_id=r.get("home_team_api_id"),

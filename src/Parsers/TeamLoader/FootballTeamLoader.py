@@ -10,10 +10,10 @@ class FootballTeamLoader():
         if not os.path.exists(team_file):
             return {}
             
-        df_t = pd.read_csv(team_file)
+        dataframe_equipes = pd.read_csv(team_file)
         
         res = {}
-        for r in df_t.to_dict("records"):
+        for r in dataframe_equipes.to_dict("records"):
             team_id = r.get("team_api_id")
             res[team_id] = Team(
                 id=team_id,
@@ -23,16 +23,16 @@ class FootballTeamLoader():
 
         if os.path.exists(match_file):
             print("Calcul des statistiques des équipes de football en cours, veuillez patienter...")
-            df_m = pd.read_csv(match_file)
+            dataframe_matchs = pd.read_csv(match_file)
             
-            home = df_m[['season', 'home_team_api_id', 'home_team_goal', 'away_team_goal']].copy()
+            home = dataframe_matchs[['season', 'home_team_api_id', 'home_team_goal', 'away_team_goal']].copy()
             home.columns = ['season', 'team_id', 'goals_for', 'goals_against']
             home['win'] = (home['goals_for'] > home['goals_against']).astype(int)
             home['draw'] = (home['goals_for'] == home['goals_against']).astype(int)
             home['loss'] = (home['goals_for'] < home['goals_against']).astype(int)
             home['played'] = 1
 
-            away = df_m[['season', 'away_team_api_id', 'away_team_goal', 'home_team_goal']].copy()
+            away = dataframe_matchs[['season', 'away_team_api_id', 'away_team_goal', 'home_team_goal']].copy()
             away.columns = ['season', 'team_id', 'goals_for', 'goals_against']
             away['win'] = (away['goals_for'] > away['goals_against']).astype(int)
             away['draw'] = (away['goals_for'] == away['goals_against']).astype(int)
