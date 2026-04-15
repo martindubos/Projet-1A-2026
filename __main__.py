@@ -153,13 +153,13 @@ def main():
 
             elif choix_stat == "4":
                 print("\n--- Face-a-Face (Head-to-Head) ---")
-                choix_type = input("Voulez-vous comparer des Joueurs (J) ou des Equipes (E) ? ").upper()
-                if choix_type == 'J':
+                choix_type = input("Voulez-vous comparer des Joueurs (1) ou des Equipes (2) ? ").upper()
+                if choix_type == '1':
                     nom1 = input("Nom du premier joueur : ")
                     nom2 = input("Nom du deuxieme joueur : ")
                     entite1 = objet_sport.get_joueur(nom1)
                     entite2 = objet_sport.get_joueur(nom2)
-                elif choix_type == 'E':
+                elif choix_type == '2':
                     nom1 = input("Nom de la premiere equipe : ")
                     nom2 = input("Nom de la deuxieme equipe : ")
                     entite1 = objet_sport.get_equipe(nom1)
@@ -169,12 +169,12 @@ def main():
                     continue
                 
                 if not entite1 or not entite2:
-                    print("Une ou les deux entites n'ont pas ete trouvees.")
+                    print("Une ou les deux entités n'ont pas été trouvées.")
                     continue
                 
                 id1, id2 = entite1.id, entite2.id
-                nom_entite1 = entite1.nom_complet() if choix_type == 'J' else entite1.nom
-                nom_entite2 = entite2.nom_complet() if choix_type == 'J' else entite2.nom
+                nom_entite1 = entite1.nom_complet() if choix_type == '1' else entite1.nom
+                nom_entite2 = entite2.nom_complet() if choix_type == '1' else entite2.nom
                 
                 victoires_1, victoires_2, nuls = 0, 0, 0
                 for m in objet_sport.matchs:
@@ -193,7 +193,7 @@ def main():
                 if nuls > 0:
                     print(f"Matchs nuls - {nuls}")
                 if (victoires_1 + victoires_2 + nuls) == 0:
-                    print("Aucun match trouve entre ces deux opposants.")
+                    print("Aucune confrontation.")
 
             elif choix_stat == "5":
                 pays_input = input("\nEntrez le nom du pays/nationalite : ").strip()
@@ -225,7 +225,7 @@ def main():
                     print(f"Aucun resultat trouve pour le pays : {pays_input}")
 
             elif choix_stat == "6":
-                continue
+                pass
             else:
                 print("Choix invalide.")
         else:
