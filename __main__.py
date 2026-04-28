@@ -104,9 +104,45 @@ def main():
                     if joueur.date_naissance: print(f"Date de naissance: {joueur.date_naissance}")
                     if joueur.taille: print(f"Taille: {joueur.taille} cm")
                     print(f"Pays: {joueur.pays}")
-                    print(f"\n>>> STATISTIQUES (2024) :")
-                    for k, v in joueur.statistiques.get(2024, {}).items():
-                        print(f"  - {k} : {v}")
+
+                    if not joueur.statistiques:
+                        print("\n>>> Aucune statistique disponible pour ce joueur.")
+                    else:
+                        saisons_disponibles = sorted(joueur.statistiques.keys())
+                        print(f"\n>>> Saisons disponibles : {', '.join(map(str, saisons_disponibles))}")
+                        saison_saisie = input("Entrez la saison pour voir les statistiques (ex: 2024) : ").strip()
+                        try:
+                            saison_cle = int(saison_saisie)
+                        except ValueError:
+                            saison_cle = saison_saisie
+
+                        if saison_cle not in joueur.statistiques:
+                            print("Saison invalide ou introuvable.")
+                        else:
+                            stats = joueur.statistiques[saison_cle]
+                            keys = list(stats.keys())
+
+                            # Sous-menu des statistiques
+                            while True:
+                                print(f"\n=== MENU DES STATISTIQUES ({joueur.nom_complet()} - {saison_cle}) ===")
+                                print("0. Afficher toutes les statistiques")
+                                for i, k in enumerate(keys, 1):
+                                    print(f"{i}. {k}")
+                                print(f"{len(keys)+1}. Retour")
+
+                                choix_stat_joueur = input("Votre choix : ").strip()
+
+                                if choix_stat_joueur == "0":
+                                    print(f"\n>>> TOUTES LES STATISTIQUES ({saison_cle}) :")
+                                    for k, v in stats.items():
+                                        print(f"  - {k} : {v}")
+                                elif choix_stat_joueur.isdigit() and 1 <= int(choix_stat_joueur) <= len(keys):
+                                    k = keys[int(choix_stat_joueur) - 1]
+                                    print(f"\n  - {k} : {stats[k]}")
+                                elif choix_stat_joueur == str(len(keys) + 1):
+                                    break
+                                else:
+                                    print("Choix invalide.")
                 else:
                     print("Joueur introuvable.")
 
