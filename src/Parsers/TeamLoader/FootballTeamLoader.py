@@ -41,11 +41,20 @@ class FootballTeamLoader():
 
             all_matches = pd.concat([home, away])
             stats = all_matches.groupby(['season', 'team_id']).sum().reset_index()
+            
+            # Calcul des points et de la différence de buts pour le classement
+            stats['points'] = 3 * stats['win'] + stats['draw']
+            stats['goal_diff'] = stats['goals_for'] - stats['goals_against']
+            
+            # Classement par saison : points DESC, puis goal_diff DESC
+            stats = stats.sort_values(by=['season', 'points', 'goal_diff'], ascending=[True, False, False])
+            stats['rank'] = stats.groupby('season').cumcount() + 1
 
             for row in stats.to_dict('records'):
                 t_id = row['team_id']
                 if t_id in res:
                     res[t_id].ajouter_statistiques(row['season'], {
+                        "Classement": int(row['rank']),
                         "Matchs joués": int(row['played']),
                         "Victoires": int(row['win']),
                         "Nuls": int(row['draw']),

@@ -108,8 +108,23 @@ def main():
             choix_stat = input("Votre choix : ")
             
             if choix_stat == "1":
-                nom_joueur = input("\nEntrez le nom du joueur (ou une partie du nom) : ")
-                joueur = objet_sport.get_joueur(nom_joueur)
+                nom_joueur = input("\nEntrez le nom du joueur (ou une partie du nom) : ").strip()
+                matches = objet_sport.get_joueur_matches(nom_joueur)
+                
+                joueur = None
+                if not matches:
+                    print("Joueur introuvable.")
+                elif len(matches) == 1:
+                    joueur = matches[0]
+                else:
+                    print(f"\nPlusieurs joueurs correspondent a '{nom_joueur}' :")
+                    for i, j in enumerate(matches, 1):
+                        print(f"{i}. {j.nom_complet()} ({CODE_TO_COUNTRY.get(j.pays, j.pays)})")
+                    
+                    choix_j = input("Choisissez le numero du joueur (ou Entree pour annuler) : ")
+                    if choix_j.isdigit() and 1 <= int(choix_j) <= len(matches):
+                        joueur = matches[int(choix_j) - 1]
+
                 if joueur:
                     print(f"\n--- Fiche du joueur ---")
                     print(f"Nom complet: {joueur.nom_complet()}")
@@ -117,35 +132,63 @@ def main():
                     if joueur.taille: print(f"Taille: {joueur.taille} cm")
                     print(f"Pays: {CODE_TO_COUNTRY.get(joueur.pays, joueur.pays)}")
 
-                    if not joueur.statistiques:
+                    # --- Statistiques globales calculées depuis les matchs ---
+                    if objet_sport.sport_en_equipe:
+                        # Sport d'equipe (Foot, Basket) : recherche dans les compositions
+                        matchs_joueur = [
+                            m for m in objet_sport.matchs
+                            if (hasattr(m, 'joueurs_dom') and joueur.id in m.joueurs_dom) or 
+                               (hasattr(m, 'joueurs_ext') and joueur.id in m.joueurs_ext)
+                        ]
+                    else:
+                        # Sport individuel (Tennis) : recherche directe par ID d'entite
+                        matchs_joueur = [
+                            m for m in objet_sport.matchs
+                            if m.equipe1_id == joueur.id or m.equipe2_id == joueur.id
+                        ]
+                    
+                    total_matchs = len(matchs_joueur)
+                    
+                    if not joueur.statistiques and total_matchs == 0:
                         print("\n>>> Aucune statistique disponible pour ce joueur.")
                     else:
-                        saisons_disponibles = sorted(joueur.statistiques.keys())
-                        print(f"\n>>> Saisons disponibles : {', '.join(map(str, saisons_disponibles))}")
-                        saison_saisie = input("Entrez la saison pour voir les statistiques (ex: 2024) : ").strip()
-                        try:
-                            saison_cle = int(saison_saisie)
-                        except ValueError:
-                            saison_cle = saison_saisie
-
-                        if saison_cle not in joueur.statistiques:
-                            print("Saison invalide ou introuvable.")
-                        else:
-                            # --- Statistiques globales calculées depuis les matchs ---
-                            matchs_joueur = [
-                                m for m in objet_sport.matchs
-                                if m.equipe1_id == joueur.id or m.equipe2_id == joueur.id
-                            ]
-                            total_matchs = len(matchs_joueur)
-                            victoires = sum(1 for m in matchs_joueur if m.vainqueur_id() == joueur.id)
-                            taux_victoire = (victoires / total_matchs * 100) if total_matchs > 0 else 0.0
-
+                        if total_matchs > 0:
+                            # Calcul des victoires
+                            victoires = 0
+                            for m in matchs_joueur:
+                                v_id = m.vainqueur_id()
+                                if v_id is not None:
+                                    # Pour le tennis, v_id == joueur.id
+                                    # Pour le foot/basket, v_id est l'ID de l'equipe gagnante. 
+                                    # On doit verifier si le joueur etait dans l'equipe gagnante.
+                                    if objet_sport.sport_en_equipe:
+                                        role = "dom" if joueur.id in getattr(m, 'joueurs_dom', []) else "ext"
+                                        equipe_joueur_id = m.equipe1_id if role == "dom" else m.equipe2_id
+                                        if v_id == equipe_joueur_id:
+                                            victoires += 1
+                                    else:
+                                        if v_id == joueur.id:
+                                            victoires += 1
+                            
+                            taux_victoire = (victoires / total_matchs * 100)
                             print(f"\n>>> STATISTIQUES GLOBALES (toutes saisons) :")
                             print(f"  - Matchs joues     : {total_matchs}")
                             print(f"  - Taux de victoire : {taux_victoire:.1f}%")
 
-                            stats = joueur.statistiques[saison_cle]
-                            keys = list(stats.keys())
+                        if joueur.statistiques:
+                            saisons_disponibles = sorted(joueur.statistiques.keys())
+                            print(f"\n>>> Saisons disponibles : {', '.join(map(str, saisons_disponibles))}")
+                            saison_saisie = input("Entrez la saison pour voir les statistiques (ex: 2024) : ").strip()
+                            try:
+                                saison_cle = int(saison_saisie)
+                            except ValueError:
+                                saison_cle = saison_saisie
+
+                            if saison_cle not in joueur.statistiques:
+                                print("Saison invalide ou introuvable.")
+                            else:
+                                stats = joueur.statistiques[saison_cle]
+                                keys = list(stats.keys())
 
                             # Sous-menu des statistiques
                             while True:
@@ -172,8 +215,23 @@ def main():
                     print("Joueur introuvable.")
 
             elif choix_stat == "2":
-                nom_equipe = input("\nEntrez le nom de l'equipe : ")
-                equipe = objet_sport.get_equipe(nom_equipe)
+                nom_equipe = input("\nEntrez le nom de l'equipe (ou une partie du nom) : ").strip()
+                matches = objet_sport.get_equipe_matches(nom_equipe)
+                
+                equipe = None
+                if not matches:
+                    print("Equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
+                elif len(matches) == 1:
+                    equipe = matches[0]
+                else:
+                    print(f"\nPlusieurs equipes correspondent a '{nom_equipe}' :")
+                    for i, e in enumerate(matches, 1):
+                        print(f"{i}. {e.nom} ({e.nom_court})")
+                    
+                    choix_e = input("Choisissez le numero de l'equipe (ou Entree pour annuler) : ")
+                    if choix_e.isdigit() and 1 <= int(choix_e) <= len(matches):
+                        equipe = matches[int(choix_e) - 1]
+
                 if equipe:
                     print(f"\n--- Fiche de l'equipe ---")
                     print(f"Nom: {equipe.nom} ({equipe.nom_court})")
@@ -202,10 +260,34 @@ def main():
                     print("Equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
 
             elif choix_stat == "3":
-                classement = objet_sport.classement
-                if not classement:
-                    print(f"\nAucun classement disponible. Le classement va etre calcule...")
-                    classement = objet_sport.calculer_classement()
+                print("\n--- Options de Classement ---")
+                print("1. Classement Global (historique)")
+                print("2. Classement par Saison")
+                choix_c = input("Votre choix (1/2) : ")
+
+                saison_filtre = None
+                if choix_c == "2":
+                    saisons_disponibles = sorted(list(set(
+                        getattr(m, "saison", m.date.year if hasattr(m, "date") and m.date else None) 
+                        for m in objet_sport.matchs
+                    )))
+                    saisons_disponibles = [s for s in saisons_disponibles if s is not None]
+                    
+                    if not saisons_disponibles:
+                        print("Aucune saison disponible pour ce sport.")
+                    else:
+                        print(f"\nSaisons disponibles : {', '.join(map(str, saisons_disponibles))}")
+                        saison_entree = input("Choisissez une saison : ").strip()
+                        try:
+                            if any(isinstance(s, int) and s == int(saison_entree) for s in saisons_disponibles):
+                                saison_filtre = int(saison_entree)
+                            else:
+                                saison_filtre = saison_entree
+                        except ValueError:
+                            saison_filtre = saison_entree
+
+                # Recuperation du classement (global ou saisonnier)
+                classement = objet_sport.calculer_classement(saison_filtre=saison_filtre)
                     
                 # Distinction par sexe si disponible
                 sexe_disponibles = set(j.sexe for j in objet_sport.joueurs.values() if j.sexe)
@@ -229,8 +311,13 @@ def main():
                     classement_a_afficher = classement
                     titre_classement = "Classement global"
 
+                if saison_filtre:
+                    titre_classement += f" (Saison {saison_filtre})"
+
                 print(f"\n--- {titre_classement} pour {nom_sport} (Top 10) ---")
                 top = classement_a_afficher[:10]
+                if not top:
+                    print("Aucun resultat pour ces criteres.")
                 for i, (id_eq, points) in enumerate(top, 1):
                     nom_affiche = f"ID_{id_eq}"
                     if id_eq in objet_sport.joueurs:

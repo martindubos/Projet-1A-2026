@@ -43,7 +43,10 @@ class Player:
 
     @property
     def sexe(self):
-        return getattr(self, 'gender', None)
+        try:
+            return self.gender
+        except AttributeError:
+            return None
 
     def __repr__(self):
         return f"Player({self.nom_complet()!r}, {self.country})"

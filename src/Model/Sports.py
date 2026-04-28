@@ -38,32 +38,54 @@ class Sport:
         # Optional: compute a basic ranking if needed
         self.calculer_classement()
 
-    def calculer_classement(self) -> list:
-        points_par_equipe = {}
+    def calculer_classement(self, saison_filtre=None) -> list:
+        points_par_entite = {}
         for match_en_cours in self.matchs:
+            # Filtrage par saison si demande
+            if saison_filtre:
+                s_match = getattr(match_en_cours, 'saison', None)
+                if s_match:
+                    if str(s_match) != str(saison_filtre):
+                        continue
+                elif hasattr(match_en_cours, 'date') and match_en_cours.date:
+                    # Pour le Tennis via l'annee de la date
+                    if str(match_en_cours.date.year) != str(saison_filtre):
+                        continue
+            
             for eid in [match_en_cours.equipe1_id, match_en_cours.equipe2_id]:
-                points_par_equipe.setdefault(eid, 0)
+                points_par_entite.setdefault(eid, 0)
             vainqueur_id = match_en_cours.vainqueur_id()
             if vainqueur_id is not None:
-                points_par_equipe[vainqueur_id] += 3
-            else:  # draw
-                points_par_equipe[match_en_cours.equipe1_id] += 1
-                points_par_equipe[match_en_cours.equipe2_id] += 1
+                points_par_entite[vainqueur_id] += 3
+            else:  # match nul
+                if match_en_cours.equipe1_id in points_par_entite:
+                    points_par_entite[match_en_cours.equipe1_id] += 1
+                if match_en_cours.equipe2_id in points_par_entite:
+                    points_par_entite[match_en_cours.equipe2_id] += 1
                 
-        self.classement = sorted(points_par_equipe.items(), key=lambda x: -x[1])
-        return self.classement
+        return sorted(points_par_entite.items(), key=lambda x: -x[1])
 
     def get_equipe(self, nom: str):
+        matches = self.get_equipe_matches(nom)
+        return matches[0] if matches else None
+
+    def get_equipe_matches(self, nom: str):
+        matches = []
         for equipe_courante in self.equipes.values():
-            if equipe_courante.nom and equipe_courante.nom.lower() == nom.lower():
-                return equipe_courante
-        return None
+            if equipe_courante.nom and nom.lower() in equipe_courante.nom.lower():
+                matches.append(equipe_courante)
+        return matches
 
     def get_joueur(self, nom: str):
+        matches = self.get_joueur_matches(nom)
+        return matches[0] if matches else None
+
+    def get_joueur_matches(self, nom: str):
+        matches = []
         for joueur_courant in self.joueurs.values():
             if joueur_courant.nom_complet() and nom.lower() in joueur_courant.nom_complet().lower():
-                return joueur_courant
-        return None
+                matches.append(joueur_courant)
+        return matches
 
     def __repr__(self) -> str:
         return (f"Sport({self.nom!r}, "
