@@ -119,6 +119,19 @@ def main():
                         if saison_cle not in joueur.statistiques:
                             print("Saison invalide ou introuvable.")
                         else:
+                            # --- Statistiques globales calculées depuis les matchs ---
+                            matchs_joueur = [
+                                m for m in objet_sport.matchs
+                                if m.equipe1_id == joueur.id or m.equipe2_id == joueur.id
+                            ]
+                            total_matchs = len(matchs_joueur)
+                            victoires = sum(1 for m in matchs_joueur if m.vainqueur_id() == joueur.id)
+                            taux_victoire = (victoires / total_matchs * 100) if total_matchs > 0 else 0.0
+
+                            print(f"\n>>> STATISTIQUES GLOBALES (toutes saisons) :")
+                            print(f"  - Matchs joues     : {total_matchs}")
+                            print(f"  - Taux de victoire : {taux_victoire:.1f}%")
+
                             stats = joueur.statistiques[saison_cle]
                             keys = list(stats.keys())
 
