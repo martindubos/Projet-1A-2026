@@ -1,3 +1,4 @@
+import datetime
 import os
 import pickle
 from src.Model.Sports import Sport
@@ -14,6 +15,17 @@ def charger_sport(nom: str, dossier_objets: str = "objets") -> Sport:
         with open(chemin, "rb") as f:
             return pickle.load(f)
     return None
+
+CODE_TO_COUNTRY = {
+    "FRA": "France", "ESP": "Espagne", "ITA": "Italie", "SUI": "Suisse",
+    "GER": "Allemagne", "ENG": "Angleterre", "USA": "États-Unis", "BEL": "Belgique",
+    "ARG": "Argentine", "BRA": "Brésil", "POR": "Portugal", "SRB": "Serbie",
+    "CRO": "Croatie", "NED": "Pays-Bas", "RUS": "Russie", "CAN": "Canada",
+    "AUS": "Australie", "GRE": "Grèce", "JPN": "Japon", "CHN": "Chine",
+    "FR": "France", "ES": "Espagne", "IT": "Italie", "CH": "Suisse",
+    "DE": "Allemagne", "UK": "Royaume-Uni", "PT": "Portugal", "NL": "Pays-Bas",
+    "BE": "Belgique", "AR": "Argentine", "BR": "Brésil"
+}
 
 def main():
     configurations = {
@@ -101,9 +113,9 @@ def main():
                 if joueur:
                     print(f"\n--- Fiche du joueur ---")
                     print(f"Nom complet: {joueur.nom_complet()}")
-                    if joueur.date_naissance: print(f"Date de naissance: {joueur.date_naissance}")
+                    if joueur.date_naissance: print(f"Date de naissance: {joueur.date_naissance.strftime('%d/%m/%Y')}")
                     if joueur.taille: print(f"Taille: {joueur.taille} cm")
-                    print(f"Pays: {joueur.pays}")
+                    print(f"Pays: {CODE_TO_COUNTRY.get(joueur.pays, joueur.pays)}")
 
                     if not joueur.statistiques:
                         print("\n>>> Aucune statistique disponible pour ce joueur.")
@@ -195,10 +207,37 @@ def main():
                     print(f"\nAucun classement disponible. Le classement va etre calcule...")
                     classement = objet_sport.calculer_classement()
                     
-                print(f"\n--- Classement global pour {nom_sport} (Top 10) ---")
-                top = classement[:10]
+                # Distinction par sexe si disponible
+                sexe_disponibles = set(j.sexe for j in objet_sport.joueurs.values() if j.sexe)
+                filtre_sexe = None
+                if len(sexe_disponibles) > 1:
+                    print("\nVoulez-vous filtrer par sexe ?")
+                    print("1. Hommes uniquement")
+                    print("2. Femmes uniquement")
+                    print("3. Classement global (tout sexe confondu)")
+                    choix_filtre = input("Votre choix : ")
+                    if choix_filtre == "1": filtre_sexe = "H"
+                    elif choix_filtre == "2": filtre_sexe = "F"
+
+                if filtre_sexe:
+                    classement_a_afficher = [
+                        (id_ent, pts) for id_ent, pts in classement 
+                        if id_ent in objet_sport.joueurs and objet_sport.joueurs[id_ent].sexe == filtre_sexe
+                    ]
+                    titre_classement = f"Classement {'Masculin' if filtre_sexe == 'H' else 'Feminin'}"
+                else:
+                    classement_a_afficher = classement
+                    titre_classement = "Classement global"
+
+                print(f"\n--- {titre_classement} pour {nom_sport} (Top 10) ---")
+                top = classement_a_afficher[:10]
                 for i, (id_eq, points) in enumerate(top, 1):
-                    print(f"{i}. ID_{id_eq} : {points} points")
+                    nom_affiche = f"ID_{id_eq}"
+                    if id_eq in objet_sport.joueurs:
+                        nom_affiche = objet_sport.joueurs[id_eq].nom_complet()
+                    elif id_eq in objet_sport.equipes:
+                        nom_affiche = objet_sport.equipes[id_eq].nom
+                    print(f"{i}. {nom_affiche} : {points} points")
 
             elif choix_stat == "4":
                 print("\n--- Face-a-Face (Head-to-Head) ---")
@@ -247,6 +286,18 @@ def main():
             elif choix_stat == "5":
                 pays_input = input("\nEntrez le nom du pays/nationalite : ").strip()
                 
+                # Distinction par sexe si disponible
+                sexe_disponibles = set(j.sexe for j in objet_sport.joueurs.values() if j.sexe)
+                filtre_sexe = None
+                if len(sexe_disponibles) > 1:
+                    print("\nVoulez-vous filtrer par sexe ?")
+                    print("1. Hommes")
+                    print("2. Femmes")
+                    print("3. Tous")
+                    choix_filtre = input("Votre choix : ")
+                    if choix_filtre == "1": filtre_sexe = "H"
+                    elif choix_filtre == "2": filtre_sexe = "F"
+
                 mapping_pays = {
                     "france": "FRA", "espagne": "ESP", "italie": "ITA", 
                     "suisse": "SUI", "allemagne": "GER", "angleterre": "ENG", 
@@ -259,11 +310,17 @@ def main():
                 
                 pays_code = mapping_pays.get(pays_input.lower(), pays_input)
 
-                joueurs_trouves = [j for j in objet_sport.joueurs.values() if j.pays and (pays_input.lower() in str(j.pays).lower() or pays_code.lower() in str(j.pays).lower())]
+                joueurs_trouves = [
+                    j for j in objet_sport.joueurs.values() 
+                    if j.pays and (pays_input.lower() in str(j.pays).lower() or pays_code.lower() in str(j.pays).lower())
+                    and (not filtre_sexe or j.sexe == filtre_sexe)
+                ]
                 equipes_trouvees = [e for e in objet_sport.equipes.values() if hasattr(e, 'pays_id') and e.pays_id and (pays_input.lower() in str(e.pays_id).lower() or pays_code.lower() in str(e.pays_id).lower())]
                 
+                complement_titre = f" ({'Hommes' if filtre_sexe == 'H' else 'Femmes'})" if filtre_sexe else ""
+                
                 if joueurs_trouves:
-                    print(f"\n--- Joueurs ({pays_input.capitalize()} / {pays_code.upper()}) ---")
+                    print(f"\n--- Joueurs {complement_titre} ({pays_input.capitalize()} / {pays_code.upper()}) ---")
                     for j in joueurs_trouves:
                         print(f"- {j.nom_complet()}")
                 if equipes_trouvees:

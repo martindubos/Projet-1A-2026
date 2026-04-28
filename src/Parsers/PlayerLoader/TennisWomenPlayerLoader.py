@@ -90,9 +90,7 @@ class TennisWomenPlayerLoader:
         
         # 1. Calcul des statistiques en Pandas
         df_statistics = pd.concat([
-            TennisWomenPlayerLoader.calculer_nombre_tournois_gagnes(dataframe_matchsatch),
-            TennisWomenPlayerLoader.calculer_taux_victoires(dataframe_matchsatch),
-            TennisWomenPlayerLoader.calculer_meilleur_resultat_grand_chelem(dataframe_matchsatch),
+            TennisWomenPlayerLoader.calculer_nombre_tournois_gagnes(dataframe_matchsatch).rename("nombre de tournois gagnés"),
         ], axis=1)
         
         mapping_hand = {"L": "gauche", "R": "droite", "U": "inconnue"}
@@ -119,6 +117,7 @@ class TennisWomenPlayerLoader:
                 country=record["ioc"],
                 hand=mapping_hand.get(record.get("hand", "U"), "inconnue"),
                 height=height,
+                gender="F"
             )
             
         # 3. Injection des statistiques

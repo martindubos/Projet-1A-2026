@@ -9,7 +9,8 @@ class Player:
         birthdate: datetime.date | None,
         country: str,
         hand: str = None,
-        height: int = None
+        height: int = None,
+        gender: str = None
     ) -> None:
         self.id = id
         self.lastname = lastname
@@ -18,6 +19,7 @@ class Player:
         self.country = country
         self.hand = hand
         self.height = height
+        self.gender = gender
         self.statistiques = {}  # { annee: {cle: valeur} }
 
     def ajouter_statistiques(self, annee: int, stats: dict) -> None:
@@ -38,6 +40,10 @@ class Player:
     @property
     def date_naissance(self):
         return self.birthdate
+
+    @property
+    def sexe(self):
+        return getattr(self, 'gender', None)
 
     def __repr__(self):
         return f"Player({self.nom_complet()!r}, {self.country})"

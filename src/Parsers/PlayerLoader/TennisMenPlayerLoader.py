@@ -72,9 +72,7 @@ class TennisMenPlayerLoader:
         dataframe_matchsatch = pd.read_csv(matches_file)
         
         df_statistics = pd.concat([
-            TennisMenPlayerLoader.calculer_nombre_tournois_gagnes(dataframe_matchsatch),
-            TennisMenPlayerLoader.calculer_taux_victoires(dataframe_matchsatch),
-            TennisMenPlayerLoader.calculer_meilleur_resultat_grand_chelem(dataframe_matchsatch),
+            TennisMenPlayerLoader.calculer_nombre_tournois_gagnes(dataframe_matchsatch).rename("nombre de tournois gagnés"),
         ], axis=1)
         
         mapping_hand = {"L": "gauche", "R": "droite", "U": "inconnue"}
@@ -97,6 +95,7 @@ class TennisMenPlayerLoader:
                 country=record["ioc"],
                 hand=mapping_hand.get(record.get("hand", "U"), "inconnue"),
                 height=height,
+                gender="H"
             )
             
         dict_statistics = df_statistics.to_dict("index")
