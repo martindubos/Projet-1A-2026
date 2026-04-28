@@ -11,8 +11,8 @@ class TennisMatchLoader():
             if not os.path.exists(matches_file):
                 continue
                 
-            df_m = pd.read_csv(matches_file)
-            for r in df_m.to_dict("records"):
+            dataframe_matchs = pd.read_csv(matches_file)
+            for r in dataframe_matchs.to_dict("records"):
                 matchs.append(MatchTennis(
                     id=r.get("match_num"),
                     equipe1_id=r.get("winner_id"),

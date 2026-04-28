@@ -2,21 +2,21 @@ import os
 import pickle
 from src.Model.Sports import Sport
 
-def sauvegarder_sport(sport: Sport, dossier_obj: str = "objets") -> None:
-    os.makedirs(dossier_obj, exist_ok=True)
-    chemin = os.path.join(dossier_obj, f"{sport.nom.lower()}.p")
+def sauvegarder_sport(sport: Sport, dossier_objets: str = "objets") -> None:
+    os.makedirs(dossier_objets, exist_ok=True)
+    chemin = os.path.join(dossier_objets, f"{sport.nom.lower()}.p")
     with open(chemin, "wb") as f:
         pickle.dump(sport, f)
 
-def charger_sport(nom: str, dossier_obj: str = "objets") -> Sport:
-    chemin = os.path.join(dossier_obj, f"{nom.lower()}.p")
+def charger_sport(nom: str, dossier_objets: str = "objets") -> Sport:
+    chemin = os.path.join(dossier_objets, f"{nom.lower()}.p")
     if os.path.exists(chemin):
         with open(chemin, "rb") as f:
             return pickle.load(f)
     return None
 
 def main():
-    configs = {
+    configurations = {
         "1": ("Tennis", "data/tennis"),
         "2": ("Football", "data/football_european_leagues"),
         "3": ("Basketball", "data/basketball"),
@@ -41,7 +41,7 @@ def main():
         elif choix_menu == "1":
             print("\n-- Chargement des donnees --")
             print("Pour quel sport voulez-vous charger les donnees ?")
-            for key, (nom, _) in configs.items():
+            for key, (nom, _) in configurations.items():
                 print(f"{key}. {nom}")
             print("A. Tous les sports disponibles")
             
@@ -49,9 +49,9 @@ def main():
             
             sports_a_charger = []
             if choix_sport == "A":
-                sports_a_charger = list(configs.values())
-            elif choix_sport in configs:
-                sports_a_charger = [configs[choix_sport]]
+                sports_a_charger = list(configurations.values())
+            elif choix_sport in configurations:
+                sports_a_charger = [configurations[choix_sport]]
             else:
                 print("Choix invalide.")
                 continue
@@ -65,34 +65,39 @@ def main():
         elif choix_menu == "2":
             print("\n-- Consultation des Statistiques --")
             print("Choisissez un sport :")
-            for key, (nom, _) in configs.items():
+            for key, (nom, _) in configurations.items():
                 print(f"{key}. {nom}")
             
             choix_sport = input("Votre choix : ")
-            if choix_sport not in configs:
+            if choix_sport not in configurations:
                 print("Choix invalide.")
                 continue
                 
-            nom_sport = configs[choix_sport][0]
+            nom_sport = configurations[choix_sport][0]
             
             # Chargement de l'objet sport memoire
-            sport_obj = charger_sport(nom_sport)
-            if not sport_obj:
+            objet_sport = charger_sport(nom_sport)
+            if not objet_sport:
                 print(f"Les donnees de {nom_sport} n'ont pas encore ete chargees. Veuillez d'abord choisir l'option 1 du menu.")
                 continue
                 
+            ex_joueur = "Novak Djokovic" if nom_sport.lower() == "tennis" else "Lionel Messi" if nom_sport.lower() == "football" else "Joueur Exemple"
+            ex_equipe = "France" if nom_sport.lower() == "tennis" else "Real Madrid" if nom_sport.lower() == "football" else "Equipe Exemple"
+
             # Sous-menu pour les statistiques
             print("\nQuel type de statistiques souhaitez-vous consulter ?")
-            print("1. Rechercher les statistiques d'un joueur precis (Ex: Serena Williams)")
-            print("2. Rechercher les statistiques d'une equipe/club (Ex: Arsenal)")
+            print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
+            print(f"2. Rechercher les statistiques d'une equipe/club (Ex: {ex_equipe})")
             print("3. Voir le classement global du sport")
-            print("4. Retour au menu principal")
+            print("4. Comparer deux joueurs / equipes (Face-a-Face)")
+            print("5. Afficher les joueurs/equipes par pays d'origine")
+            print("6. Retour au menu principal")
             
             choix_stat = input("Votre choix : ")
             
             if choix_stat == "1":
                 nom_joueur = input("\nEntrez le nom du joueur (ou une partie du nom) : ")
-                joueur = sport_obj.get_joueur(nom_joueur)
+                joueur = objet_sport.get_joueur(nom_joueur)
                 if joueur:
                     print(f"\n--- Fiche du joueur ---")
                     print(f"Nom complet: {joueur.nom_complet()}")
@@ -107,7 +112,7 @@ def main():
 
             elif choix_stat == "2":
                 nom_equipe = input("\nEntrez le nom de l'equipe : ")
-                equipe = sport_obj.get_equipe(nom_equipe)
+                equipe = objet_sport.get_equipe(nom_equipe)
                 if equipe:
                     print(f"\n--- Fiche de l'equipe ---")
                     print(f"Nom: {equipe.nom} ({equipe.nom_court})")
@@ -136,10 +141,10 @@ def main():
                     print("Equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
 
             elif choix_stat == "3":
-                classement = sport_obj.classement
+                classement = objet_sport.classement
                 if not classement:
                     print(f"\nAucun classement disponible. Le classement va etre calcule...")
-                    classement = sport_obj.calculer_classement()
+                    classement = objet_sport.calculer_classement()
                     
                 print(f"\n--- Classement global pour {nom_sport} (Top 10) ---")
                 top = classement[:10]
@@ -147,7 +152,80 @@ def main():
                     print(f"{i}. ID_{id_eq} : {points} points")
 
             elif choix_stat == "4":
-                continue
+                print("\n--- Face-a-Face (Head-to-Head) ---")
+                choix_type = input("Voulez-vous comparer des Joueurs (1) ou des Equipes (2) ? ").upper()
+                if choix_type == '1':
+                    nom1 = input("Nom du premier joueur : ")
+                    nom2 = input("Nom du deuxieme joueur : ")
+                    entite1 = objet_sport.get_joueur(nom1)
+                    entite2 = objet_sport.get_joueur(nom2)
+                elif choix_type == '2':
+                    nom1 = input("Nom de la premiere equipe : ")
+                    nom2 = input("Nom de la deuxieme equipe : ")
+                    entite1 = objet_sport.get_equipe(nom1)
+                    entite2 = objet_sport.get_equipe(nom2)
+                else:
+                    print("Choix invalide.")
+                    continue
+                
+                if not entite1 or not entite2:
+                    print("Une ou les deux entités n'ont pas été trouvées.")
+                    continue
+                
+                id1, id2 = entite1.id, entite2.id
+                nom_entite1 = entite1.nom_complet() if choix_type == '1' else entite1.nom
+                nom_entite2 = entite2.nom_complet() if choix_type == '1' else entite2.nom
+                
+                victoires_1, victoires_2, nuls = 0, 0, 0
+                for m in objet_sport.matchs:
+                    if (m.equipe1_id == id1 and m.equipe2_id == id2) or (m.equipe1_id == id2 and m.equipe2_id == id1):
+                        vainqueur = m.vainqueur_id()
+                        if vainqueur == id1:
+                            victoires_1 += 1
+                        elif vainqueur == id2:
+                            victoires_2 += 1
+                        else:
+                            nuls += 1
+                
+                print(f"\n>>> Historique des confrontations :")
+                print(f"{nom_entite1} - {victoires_1} victoire(s)")
+                print(f"{nom_entite2} - {victoires_2} victoire(s)")
+                if nuls > 0:
+                    print(f"Matchs nuls - {nuls}")
+                if (victoires_1 + victoires_2 + nuls) == 0:
+                    print("Aucune confrontation.")
+
+            elif choix_stat == "5":
+                pays_input = input("\nEntrez le nom du pays/nationalite : ").strip()
+                
+                mapping_pays = {
+                    "france": "FRA", "espagne": "ESP", "italie": "ITA", 
+                    "suisse": "SUI", "allemagne": "GER", "angleterre": "ENG", 
+                    "etats-unis": "USA", "usa": "USA", "belgique": "BEL", 
+                    "argentine": "ARG", "bresil": "BRA", "portugal": "POR",
+                    "serbie": "SRB", "croatie": "CRO", "pays-bas": "NED",
+                    "russie": "RUS", "canada": "CAN", "australie": "AUS",
+                    "grece": "GRE", "japon": "JPN", "chine": "CHN"
+                }
+                
+                pays_code = mapping_pays.get(pays_input.lower(), pays_input)
+
+                joueurs_trouves = [j for j in objet_sport.joueurs.values() if j.pays and (pays_input.lower() in str(j.pays).lower() or pays_code.lower() in str(j.pays).lower())]
+                equipes_trouvees = [e for e in objet_sport.equipes.values() if hasattr(e, 'pays_id') and e.pays_id and (pays_input.lower() in str(e.pays_id).lower() or pays_code.lower() in str(e.pays_id).lower())]
+                
+                if joueurs_trouves:
+                    print(f"\n--- Joueurs ({pays_input.capitalize()} / {pays_code.upper()}) ---")
+                    for j in joueurs_trouves:
+                        print(f"- {j.nom_complet()}")
+                if equipes_trouvees:
+                    print(f"\n--- Equipes ({pays_input.capitalize()} / {pays_code.upper()}) ---")
+                    for e in equipes_trouvees:
+                        print(f"- {e.nom}")
+                if not joueurs_trouves and not equipes_trouvees:
+                    print(f"Aucun resultat trouve pour le pays : {pays_input}")
+
+            elif choix_stat == "6":
+                pass
             else:
                 print("Choix invalide.")
         else:

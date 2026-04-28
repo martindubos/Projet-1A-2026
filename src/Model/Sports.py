@@ -39,30 +39,30 @@ class Sport:
         self.calculer_classement()
 
     def calculer_classement(self) -> list:
-        pts = {}
-        for m in self.matchs:
-            for eid in [m.equipe1_id, m.equipe2_id]:
-                pts.setdefault(eid, 0)
-            v = m.vainqueur_id()
-            if v is not None:
-                pts[v] += 3
+        points_par_equipe = {}
+        for match_en_cours in self.matchs:
+            for eid in [match_en_cours.equipe1_id, match_en_cours.equipe2_id]:
+                points_par_equipe.setdefault(eid, 0)
+            vainqueur_id = match_en_cours.vainqueur_id()
+            if vainqueur_id is not None:
+                points_par_equipe[vainqueur_id] += 3
             else:  # draw
-                pts[m.equipe1_id] += 1
-                pts[m.equipe2_id] += 1
+                points_par_equipe[match_en_cours.equipe1_id] += 1
+                points_par_equipe[match_en_cours.equipe2_id] += 1
                 
-        self.classement = sorted(pts.items(), key=lambda x: -x[1])
+        self.classement = sorted(points_par_equipe.items(), key=lambda x: -x[1])
         return self.classement
 
     def get_equipe(self, nom: str):
-        for eq in self.equipes.values():
-            if eq.nom and eq.nom.lower() == nom.lower():
-                return eq
+        for equipe_courante in self.equipes.values():
+            if equipe_courante.nom and equipe_courante.nom.lower() == nom.lower():
+                return equipe_courante
         return None
 
     def get_joueur(self, nom: str):
-        for j in self.joueurs.values():
-            if j.nom_complet() and nom.lower() in j.nom_complet().lower():
-                return j
+        for joueur_courant in self.joueurs.values():
+            if joueur_courant.nom_complet() and nom.lower() in joueur_courant.nom_complet().lower():
+                return joueur_courant
         return None
 
     def __repr__(self) -> str:
