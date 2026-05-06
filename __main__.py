@@ -3,6 +3,11 @@ import os
 import pickle
 from src.Model.Sports import Sport
 
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
+
 def sauvegarder_sport(sport: Sport, dossier_objets: str = "objets") -> None:
     os.makedirs(dossier_objets, exist_ok=True)
     chemin = os.path.join(dossier_objets, f"{sport.nom.lower()}.p")
@@ -103,7 +108,8 @@ def main():
             print("3. Voir le classement global du sport")
             print("4. Comparer deux joueurs / equipes (Face-a-Face)")
             print("5. Afficher les joueurs/equipes par pays d'origine")
-            print("6. Retour au menu principal")
+            print("6. Afficher l'evolution du classement (Graphique)")
+            print("7. Retour au menu principal")
             
             choix_stat = input("Votre choix : ")
             
@@ -418,6 +424,67 @@ def main():
                     print(f"Aucun resultat trouve pour le pays : {pays_input}")
 
             elif choix_stat == "6":
+                if not plt:
+                    print("\n[Erreur] matplotlib n'est pas installe. Installez-le avec 'pip install matplotlib'.")
+                    continue
+                
+                print("\n--- Evolution du Classement (Graphique) ---")
+                choix_type = input("Voir l'evolution d'un Joueur (1) ou d'une Equipe (2) ? ").strip()
+                if choix_type == "1":
+                    nom = input("Entrez le nom du joueur : ").strip()
+                    entite = objet_sport.get_joueur(nom)
+                    is_joueur = True
+                elif choix_type == "2":
+                    nom = input("Entrez le nom de l'equipe : ").strip()
+                    entite = objet_sport.get_equipe(nom)
+                    is_joueur = False
+                else:
+                    print("Choix invalide.")
+                    continue
+                    
+                if not entite:
+                    print("Entite introuvable.")
+                    continue
+                
+                saisons_disponibles = sorted(list(set(
+                    getattr(m, "saison", m.date.year if hasattr(m, "date") and m.date else None) 
+                    for m in objet_sport.matchs
+                )))
+                saisons_disponibles = [s for s in saisons_disponibles if s is not None]
+                
+                if not saisons_disponibles:
+                    print("Aucune donnee de saison disponible pour generer le graphique.")
+                    continue
+                
+                nom_affiche = entite.nom_complet() if is_joueur else entite.nom
+                print(f"Calcul des points par saison pour {nom_affiche}...")
+                
+                points_par_saison = []
+                saisons_plot = []
+                
+                for s in saisons_disponibles:
+                    classement_saison = objet_sport.calculer_classement(saison_filtre=s)
+                    pts = next((points for id_ent, points in classement_saison if id_ent == entite.id), 0)
+                    if pts > 0:
+                        saisons_plot.append(str(s))
+                        points_par_saison.append(pts)
+                        
+                if not points_par_saison:
+                    print("Aucun point trouve pour cette entite sur les saisons disponibles.")
+                    continue
+                    
+                plt.figure(figsize=(10, 6))
+                plt.plot(saisons_plot, points_par_saison, marker='o', linestyle='-', color='b', linewidth=2, markersize=8)
+                plt.title(f"Evolution des points de {nom_affiche} par saison", fontsize=14)
+                plt.xlabel("Saison", fontsize=12)
+                plt.ylabel("Points au classement", fontsize=12)
+                plt.grid(True, linestyle='--', alpha=0.7)
+                plt.xticks(rotation=45)
+                plt.tight_layout()
+                print(">>> Affichage du graphique dans une nouvelle fenetre. Fermez-la pour continuer.")
+                plt.show()
+
+            elif choix_stat == "7":
                 pass
             else:
                 print("Choix invalide.")

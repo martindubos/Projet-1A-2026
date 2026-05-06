@@ -8,13 +8,17 @@ class TennisMenPlayerLoader:
 
     @staticmethod
     def calculer_nombre_tournois_gagnes(dataframe_matchsatch: pd.DataFrame) -> pd.Series:
+        # ETAPE 1 : On recupere la liste de tous les joueurs uniques
         players = pd.concat([dataframe_matchsatch["winner_id"], dataframe_matchsatch["loser_id"]]).unique()
         res = pd.Series(data=0, index=players, name="n_tournaments_won")
-        winners = (
-            dataframe_matchsatch.loc[dataframe_matchsatch["round"] == "F", ["winner_id", "tourney_id"]]
-            .groupby("winner_id")["tourney_id"]
-            .nunique()
-        )
+        
+        # ETAPE 2 : On filtre les matchs pour ne garder que les Finales (round == "F")
+        finales = dataframe_matchsatch[dataframe_matchsatch["round"] == "F"]
+        
+        # ETAPE 3 : On regroupe par vainqueur (groupby) et on compte le nombre de tournois uniques (nunique)
+        winners = finales.groupby("winner_id")["tourney_id"].nunique()
+        
+        # ETAPE 4 : On met a jour notre serie de resultats
         res.loc[winners.index] = winners
         return res
 
