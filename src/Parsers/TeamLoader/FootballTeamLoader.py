@@ -2,65 +2,107 @@ import os
 import pandas as pd
 from src.Model.Team import Team
 
+
 class FootballTeamLoader():
     @staticmethod
     def load_all_team(dossier: str) -> dict:
-        team_file = os.path.join(dossier, "team.csv")
-        match_file = os.path.join(dossier, "match.csv")
-        if not os.path.exists(team_file):
+        """
+        Charge toutes les équipes de football et calcule leurs statistiques par saison.
+        Les statistiques sont calculées en parcourant les matchs avec des boucles simples.
+        """
+        fichier_equipes = os.path.join(dossier, "team.csv")
+        fichier_matchs = os.path.join(dossier, "match.csv")
+
+        if not os.path.exists(fichier_equipes):
             return {}
-            
-        dataframe_equipes = pd.read_csv(team_file)
-        
-        res = {}
-        for r in dataframe_equipes.to_dict("records"):
-            team_id = r.get("team_api_id")
-            res[team_id] = Team(
-                id=team_id,
-                nom=r.get("team_long_name", ""),
-                nom_court=r.get("team_short_name", "")
+
+        tableau_equipes = pd.read_csv(fichier_equipes)
+
+        # Construction du dictionnaire des équipes
+        equipes = {}
+        for ligne in tableau_equipes.to_dict("records"):
+            id_equipe = ligne.get("team_api_id")
+            equipes[id_equipe] = Team(
+                id=id_equipe,
+                nom=ligne.get("team_long_name", ""),
+                nom_court=ligne.get("team_short_name", "")
             )
 
-        if os.path.exists(match_file):
-            print("Calcul des statistiques des équipes de football en cours, veuillez patienter...")
-            dataframe_matchs = pd.read_csv(match_file)
-            
-            home = dataframe_matchs[['season', 'home_team_api_id', 'home_team_goal', 'away_team_goal']].copy()
-            home.columns = ['season', 'team_id', 'goals_for', 'goals_against']
-            home['win'] = (home['goals_for'] > home['goals_against']).astype(int)
-            home['draw'] = (home['goals_for'] == home['goals_against']).astype(int)
-            home['loss'] = (home['goals_for'] < home['goals_against']).astype(int)
-            home['played'] = 1
+        # Calcul des statistiques à partir des matchs
+        if not os.path.exists(fichier_matchs):
+            return equipes
 
-            away = dataframe_matchs[['season', 'away_team_api_id', 'away_team_goal', 'home_team_goal']].copy()
-            away.columns = ['season', 'team_id', 'goals_for', 'goals_against']
-            away['win'] = (away['goals_for'] > away['goals_against']).astype(int)
-            away['draw'] = (away['goals_for'] == away['goals_against']).astype(int)
-            away['loss'] = (away['goals_for'] < away['goals_against']).astype(int)
-            away['played'] = 1
+        print("Calcul des statistiques des équipes de football en cours, veuillez patienter...")
+        tableau_matchs = pd.read_csv(fichier_matchs)
+        liste_matchs = tableau_matchs.to_dict("records")
 
-            all_matches = pd.concat([home, away])
-            stats = all_matches.groupby(['season', 'team_id']).sum().reset_index()
-            
-            # Calcul des points et de la différence de buts pour le classement
-            stats['points'] = 3 * stats['win'] + stats['draw']
-            stats['goal_diff'] = stats['goals_for'] - stats['goals_against']
-            
-            # Classement par saison : points DESC, puis goal_diff DESC
-            stats = stats.sort_values(by=['season', 'points', 'goal_diff'], ascending=[True, False, False])
-            stats['rank'] = stats.groupby('season').cumcount() + 1
+        # On construit un dictionnaire :
+        # stats_par_equipe = { saison: { id_equipe: { "victoires": ..., ...} } }
+        stats_par_equipe = {}
 
-            for row in stats.to_dict('records'):
-                t_id = row['team_id']
-                if t_id in res:
-                    res[t_id].ajouter_statistiques(row['season'], {
-                        "Classement": int(row['rank']),
-                        "Matchs joués": int(row['played']),
-                        "Victoires": int(row['win']),
-                        "Nuls": int(row['draw']),
-                        "Défaites": int(row['loss']),
-                        "Buts marqués": int(row['goals_for']),
-                        "Buts encaissés": int(row['goals_against'])
+        for match in liste_matchs:
+            saison = match.get("season")
+            id_domicile = match.get("home_team_api_id")
+            id_exterieur = match.get("away_team_api_id")
+
+            # On ignore les matchs avec des données manquantes
+            if saison is None or id_domicile is None or id_exterieur is None:
+                continue
+
+            buts_domicile = match.get("home_team_goal", 0) or 0
+            buts_exterieur = match.get("away_team_goal", 0) or 0
+
+            # Initialisation des statistiques pour la saison si besoin
+            if saison not in stats_par_equipe:
+                stats_par_equipe[saison] = {}
+
+            for id_equipe in [id_domicile, id_exterieur]:
+                if id_equipe not in stats_par_equipe[saison]:
+                    stats_par_equipe[saison][id_equipe] = {
+                        "matchs_joues": 0,
+                        "victoires": 0,
+                        "nuls": 0,
+                        "defaites": 0,
+                        "buts_marques": 0,
+                        "buts_encaisses": 0
+                    }
+
+            stats_dom = stats_par_equipe[saison][id_domicile]
+            stats_ext = stats_par_equipe[saison][id_exterieur]
+
+            stats_dom["matchs_joues"] += 1
+            stats_ext["matchs_joues"] += 1
+            stats_dom["buts_marques"] += buts_domicile
+            stats_dom["buts_encaisses"] += buts_exterieur
+            stats_ext["buts_marques"] += buts_exterieur
+            stats_ext["buts_encaisses"] += buts_domicile
+
+            if buts_domicile > buts_exterieur:
+                stats_dom["victoires"] += 1
+                stats_ext["defaites"] += 1
+            elif buts_exterieur > buts_domicile:
+                stats_ext["victoires"] += 1
+                stats_dom["defaites"] += 1
+            else:
+                stats_dom["nuls"] += 1
+                stats_ext["nuls"] += 1
+
+        # Calcul des points et injection dans les objets Team
+        for saison, equipes_de_la_saison in stats_par_equipe.items():
+            for id_equipe, stats in equipes_de_la_saison.items():
+                if id_equipe in equipes:
+                    points = stats["victoires"] * 3 + stats["nuls"]
+                    difference_buts = stats["buts_marques"] - stats["buts_encaisses"]
+
+                    equipes[id_equipe].ajouter_statistiques(saison, {
+                        "Matchs joues": stats["matchs_joues"],
+                        "Victoires": stats["victoires"],
+                        "Nuls": stats["nuls"],
+                        "Defaites": stats["defaites"],
+                        "Buts marques": stats["buts_marques"],
+                        "Buts encaisses": stats["buts_encaisses"],
+                        "Points": points,
+                        "Difference de buts": difference_buts
                     })
 
-        return res
+        return equipes

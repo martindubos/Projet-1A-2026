@@ -1,129 +1,157 @@
 import os
 import datetime
-import numpy as np
 import pandas as pd
 from src.Model.Player import Player
+
 
 class TennisWomenPlayerLoader:
 
     @staticmethod
-    def calculer_nombre_tournois_gagnes(dataframe_matchsatch: pd.DataFrame) -> pd.Series:
-        # On récupère tous les ID uniques possibles (gagnantes et perdantes)
-        players = pd.concat([dataframe_matchsatch["winner_id"], dataframe_matchsatch["loser_id"]]).unique()
-        
-        # On crée une Series remplie de 0 pour tout le monde
-        res = pd.Series(data=0, index=players, name="n_tournaments_won")
-        
-        # On filtre les matchs qui sont des finales (round == "F")
-        # On compte ensuite le nombre de tournois distincts ("tourney_id") gagnés par chaque gagnante
-        winners = (
-            dataframe_matchsatch.loc[dataframe_matchsatch["round"] == "F", ["winner_id", "tourney_id"]]
-            .groupby("winner_id")["tourney_id"]
-            .nunique()
-        )
-        
-        # On met à jour la Series avec le vrai compte
-        res.loc[winners.index] = winners
-        return res
+    def calculer_nombre_tournois_gagnes(liste_matchs: list) -> dict:
+        """
+        Compte le nombre de tournois gagnés par chaque joueuse.
+        Une joueuse gagne un tournoi si elle remporte la finale (round == "F").
+        On utilise un ensemble (set) pour ne compter qu'une fois chaque tournoi.
+        """
+        tournois_gagnes_par_joueuse = {}  # { id_joueuse: set(id_tournoi) }
+
+        for match in liste_matchs:
+            if match.get("round") != "F":
+                continue
+
+            id_gagnante = match.get("winner_id")
+            id_tournoi = match.get("tourney_id")
+
+            if id_gagnante is None or id_tournoi is None:
+                continue
+
+            if id_gagnante not in tournois_gagnes_par_joueuse:
+                tournois_gagnes_par_joueuse[id_gagnante] = set()
+
+            tournois_gagnes_par_joueuse[id_gagnante].add(id_tournoi)
+
+        # Conversion en nombre de tournois
+        resultat = {}
+        for id_joueuse, set_tournois in tournois_gagnes_par_joueuse.items():
+            resultat[id_joueuse] = len(set_tournois)
+
+        return resultat
 
     @staticmethod
-    def calculer_taux_victoires(dataframe_matchsatch: pd.DataFrame) -> pd.Series:
-        players = pd.concat([dataframe_matchsatch["winner_id"], dataframe_matchsatch["loser_id"]]).unique()
-        
-        wins = pd.Series(data=0, index=players)
-        losses = pd.Series(data=0, index=players)
-        
-        # count() automatique sur les apparitions dans la colonne winner_id et loser_id
-        wins_actual = dataframe_matchsatch["winner_id"].value_counts()
-        losses_actual = dataframe_matchsatch["loser_id"].value_counts()
-        
-        # Mise à jour
-        wins.loc[wins_actual.index] = wins_actual
-        losses.loc[losses_actual.index] = losses_actual
-        
-        # Calcul du ratio
-        res = wins / (wins + losses)
-        res.name = "winning_ratio"
-        return res
-
-    @staticmethod
-    def calculer_meilleur_resultat_grand_chelem(dataframe_matchsatch: pd.DataFrame) -> pd.Series:
-        players = pd.concat([dataframe_matchsatch["winner_id"], dataframe_matchsatch["loser_id"]]).unique()
-        res = pd.Series(data=None, index=players, dtype=str, name="best_grand_chelem_result")
-        
-        # On filtre les Grand Chelems (tourney_level == "G")
-        dataframe_matchsatch_g = dataframe_matchsatch[dataframe_matchsatch["tourney_level"] == "G"].copy()
-        
-        # Mapping pour donner un poids numérique à chaque tour
-        mapping_round_int = {
+    def calculer_meilleur_resultat_grand_chelem(liste_matchs: list) -> dict:
+        """
+        Trouve le meilleur résultat de chaque joueuse dans un Grand Chelem.
+        Le tour est converti en score numérique pour comparer facilement.
+        La joueuse qui remporte la finale reçoit la mention "W" (Winner).
+        """
+        poids_par_tour = {
             "R128": 0, "R64": 1, "R32": 2, "R16": 3,
             "QF": 4, "SF": 5, "F": 6
         }
-        mapping_int_round = {v: k for k, v in mapping_round_int.items()}
-        
-        # On applique le mapping
-        dataframe_matchsatch_g["round_int"] = dataframe_matchsatch_g["round"].map(mapping_round_int)
-        
-        # On cherche l'étape maximale atteinte avant de perdre
-        best_results = (
-            dataframe_matchsatch_g.groupby("loser_id")["round_int"].max()
-            .map(mapping_int_round)
-        )
-        
-        # Les joueuses qui ont gagné une finale ("W")
-        winners = dataframe_matchsatch_g.loc[dataframe_matchsatch_g["round"] == "F", "winner_id"].to_numpy()
-        
-        res.loc[best_results.index] = best_results
-        res.loc[winners] = "W"
-        return res
+        tour_par_poids = {poids: tour for tour, poids in poids_par_tour.items()}
+
+        meilleur_score_par_perdante = {}
+        gagnantes_finale = set()
+
+        for match in liste_matchs:
+            if match.get("tourney_level") != "G":
+                continue
+
+            tour_actuel = match.get("round")
+            id_perdante = match.get("loser_id")
+            id_gagnante = match.get("winner_id")
+
+            if tour_actuel not in poids_par_tour:
+                continue
+
+            score_actuel = poids_par_tour[tour_actuel]
+
+            if id_perdante is not None:
+                if id_perdante not in meilleur_score_par_perdante:
+                    meilleur_score_par_perdante[id_perdante] = score_actuel
+                else:
+                    if score_actuel > meilleur_score_par_perdante[id_perdante]:
+                        meilleur_score_par_perdante[id_perdante] = score_actuel
+
+            if tour_actuel == "F" and id_gagnante is not None:
+                gagnantes_finale.add(id_gagnante)
+
+        resultat = {}
+        for id_joueuse, meilleur_score in meilleur_score_par_perdante.items():
+            resultat[id_joueuse] = tour_par_poids[meilleur_score]
+
+        for id_joueuse in gagnantes_finale:
+            resultat[id_joueuse] = "W"
+
+        return resultat
 
     @staticmethod
     def load_all_player(dossier: str) -> dict:
-        players_file = os.path.join(dossier, "wta_players_2024.csv")
-        matches_file = os.path.join(dossier, "wta_matches_2024.csv")
-        
-        if not os.path.exists(players_file) or not os.path.exists(matches_file):
+        """
+        Charge toutes les joueuses WTA depuis les fichiers CSV du dossier donné.
+        Retourne un dictionnaire { id_joueuse: Player }.
+        """
+        fichier_joueuses = os.path.join(dossier, "wta_players_2024.csv")
+        fichier_matchs = os.path.join(dossier, "wta_matches_2024.csv")
+
+        if not os.path.exists(fichier_joueuses) or not os.path.exists(fichier_matchs):
             return {}
-            
-        dataframe_joueurslayer = pd.read_csv(players_file)
-        dataframe_matchsatch = pd.read_csv(matches_file)
-        
-        # 1. Calcul des statistiques en Pandas
-        df_statistics = pd.concat([
-            TennisWomenPlayerLoader.calculer_nombre_tournois_gagnes(dataframe_matchsatch).rename("nombre de tournois gagnés"),
-        ], axis=1)
-        
-        mapping_hand = {"L": "gauche", "R": "droite", "U": "inconnue"}
-        res = {}
-        
-        # 2. Création itérative des objets
-        for record in dataframe_joueurslayer.to_dict("records"):
-            # Gestion de la date de naissance (float dans le CSV original, géré avec np.isnan)
-            if not np.isnan(record["dob"]):
-                # .0f pour retirer le .0 décimal
-                birthdate = datetime.datetime.strptime(f"{record['dob']:.0f}", "%Y%m%d")
-                birthdate = datetime.date(birthdate.year, birthdate.month, birthdate.day)
-            else:
-                birthdate = None
 
-            # Gestion de la taille
-            height = int(record["height"]) if not np.isnan(record["height"]) else None
+        tableau_joueuses = pd.read_csv(fichier_joueuses)
+        tableau_matchs = pd.read_csv(fichier_matchs)
 
-            res[record["player_id"]] = Player(
-                id=record["player_id"],
-                lastname=record["name_last"],
-                firstname=record["name_first"],
-                birthdate=birthdate,
-                country=record["ioc"],
-                hand=mapping_hand.get(record.get("hand", "U"), "inconnue"),
-                height=height,
+        liste_matchs = tableau_matchs.to_dict("records")
+
+        # Calcul des statistiques
+        nb_tournois_gagnes = TennisWomenPlayerLoader.calculer_nombre_tournois_gagnes(liste_matchs)
+        meilleur_gc = TennisWomenPlayerLoader.calculer_meilleur_resultat_grand_chelem(liste_matchs)
+
+        correspondance_main = {"L": "gauche", "R": "droite", "U": "inconnue"}
+
+        joueuses = {}
+
+        for ligne in tableau_joueuses.to_dict("records"):
+            # Date de naissance (stockée comme float ex: 19950812.0)
+            date_naissance = None
+            dob_brut = ligne.get("dob")
+            if dob_brut is not None and not pd.isna(dob_brut):
+                try:
+                    date_str = str(int(dob_brut))
+                    date_naissance = datetime.datetime.strptime(date_str, "%Y%m%d").date()
+                except (ValueError, OverflowError):
+                    date_naissance = None
+
+            # Taille (peut être absente)
+            taille_brute = ligne.get("height")
+            taille = int(taille_brute) if taille_brute is not None and not pd.isna(taille_brute) else None
+
+            id_joueuse = ligne["player_id"]
+
+            joueuses[id_joueuse] = Player(
+                id=id_joueuse,
+                lastname=ligne.get("name_last", ""),
+                firstname=ligne.get("name_first", ""),
+                birthdate=date_naissance,
+                country=ligne.get("ioc", ""),
+                hand=correspondance_main.get(ligne.get("hand", "U"), "inconnue"),
+                height=taille,
                 gender="F"
             )
-            
-        # 3. Injection des statistiques
-        dict_statistics = df_statistics.to_dict("index")
-        for key, value in dict_statistics.items():
-            if key in res:
-                res[key].ajouter_statistiques(2024, value)
 
-        return res
+        # Ajout des statistiques calculées
+        for id_joueuse, joueuse in joueuses.items():
+            stats_joueuse = {}
+
+            if id_joueuse in nb_tournois_gagnes:
+                stats_joueuse["Tournois gagnes"] = nb_tournois_gagnes[id_joueuse]
+            else:
+                stats_joueuse["Tournois gagnes"] = 0
+
+            if id_joueuse in meilleur_gc:
+                stats_joueuse["Meilleur resultat en Grand Chelem"] = meilleur_gc[id_joueuse]
+            else:
+                stats_joueuse["Meilleur resultat en Grand Chelem"] = "Aucun"
+
+            joueuse.ajouter_statistiques(2024, stats_joueuse)
+
+        return joueuses

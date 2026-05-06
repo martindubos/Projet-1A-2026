@@ -1,12 +1,13 @@
 class Match:
     def __init__(self, id, equipe1_id, equipe2_id,
-                 score1, score2, date=None):
+                 score1, score2, date=None, saison=None):
         self.id         = id
         self.equipe1_id = equipe1_id
         self.equipe2_id = equipe2_id
         self.score1     = score1
         self.score2     = score2
         self.date       = date
+        self.saison     = saison  # Annee ou saison du match (ex: 2024 ou "2015/2016")
 
     def vainqueur_id(self):
         if self.score1 > self.score2: return self.equipe1_id

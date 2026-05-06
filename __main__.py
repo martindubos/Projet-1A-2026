@@ -1,4 +1,3 @@
-1
 import datetime
 import os
 import pickle
@@ -309,11 +308,12 @@ def main():
 
                 saison_filtre = None
                 if choix_c == "2":
-                    saisons_disponibles = sorted(list(set(
-                        getattr(m, "saison", m.date.year if hasattr(m, "date") and m.date else None) 
-                        for m in objet_sport.matchs
-                    )))
-                    saisons_disponibles = [s for s in saisons_disponibles if s is not None]
+                    # On collecte toutes les saisons disponibles dans les matchs
+                    saisons_disponibles = set()
+                    for m in objet_sport.matchs:
+                        if m.saison is not None:
+                            saisons_disponibles.add(m.saison)
+                    saisons_disponibles = sorted(list(saisons_disponibles))
                     
                     if not saisons_disponibles:
                         print("Aucune saison disponible pour ce sport.")
@@ -482,11 +482,12 @@ def main():
                     print("Entite introuvable.")
                     continue
                 
-                saisons_disponibles = sorted(list(set(
-                    getattr(m, "saison", m.date.year if hasattr(m, "date") and m.date else None) 
-                    for m in objet_sport.matchs
-                )))
-                saisons_disponibles = [s for s in saisons_disponibles if s is not None]
+                # On collecte toutes les saisons disponibles dans les matchs
+                saisons_disponibles = set()
+                for m in objet_sport.matchs:
+                    if m.saison is not None:
+                        saisons_disponibles.add(m.saison)
+                saisons_disponibles = sorted(list(saisons_disponibles))
                 
                 if not saisons_disponibles:
                     print("Aucune donnee de saison disponible pour generer le graphique.")
@@ -505,22 +506,23 @@ def main():
                 for s in saisons_disponibles:
                     classement_saison = objet_sport.calculer_classement(saison_filtre=s)
                     
-                    # Pour le football (ou les sports avec plusieurs ligues), on filtre par ligue
+                    # Pour le football, les matchs ont un attribut league_id
+                    # On identifie la ligue de l'équipe pour ne comparer que dans son championnat
                     if not is_joueur:
-                        league_id = None
+                        ligue_de_lequipe = None
                         for m in objet_sport.matchs:
-                            if str(getattr(m, "saison", None)) == str(s) and (m.equipe1_id == entite.id or m.equipe2_id == entite.id):
-                                league_id = getattr(m, "league_id", None)
-                                if league_id is not None:
+                            if str(m.saison) == str(s) and (m.equipe1_id == entite.id or m.equipe2_id == entite.id):
+                                ligue_de_lequipe = m.league_id
+                                if ligue_de_lequipe is not None:
                                     break
                                     
-                        if league_id is not None:
-                            equipes_ligue = set()
+                        if ligue_de_lequipe is not None:
+                            equipes_de_la_ligue = set()
                             for m in objet_sport.matchs:
-                                if str(getattr(m, "saison", None)) == str(s) and getattr(m, "league_id", None) == league_id:
-                                    equipes_ligue.add(m.equipe1_id)
-                                    equipes_ligue.add(m.equipe2_id)
-                            classement_saison = [(id_ent, pts) for id_ent, pts in classement_saison if id_ent in equipes_ligue]
+                                if str(m.saison) == str(s) and m.league_id == ligue_de_lequipe:
+                                    equipes_de_la_ligue.add(m.equipe1_id)
+                                    equipes_de_la_ligue.add(m.equipe2_id)
+                            classement_saison = [(id_ent, pts) for id_ent, pts in classement_saison if id_ent in equipes_de_la_ligue]
                     
                     
                     if afficher_classement:

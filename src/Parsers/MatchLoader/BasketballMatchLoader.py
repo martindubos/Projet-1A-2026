@@ -2,24 +2,30 @@ import os
 import pandas as pd
 from src.Model.Match import MatchBasketball
 
+
 class BasketballMatchLoader():
     @staticmethod
     def load_all_match(dossier: str) -> list:
+        """
+        Charge tous les matchs de basketball depuis le fichier CSV du dossier.
+        """
+        fichier_matchs = os.path.join(dossier, "basketball_game.csv")
+        if not os.path.exists(fichier_matchs):
+            return []
+
+        tableau_matchs = pd.read_csv(fichier_matchs)
+
         matchs = []
-        matches_file = os.path.join(dossier, "basketball_game.csv")
-        if not os.path.exists(matches_file):
-            return matchs
-            
-        dataframe_matchs = pd.read_csv(matches_file)
-        for r in dataframe_matchs.to_dict("records"):
+        for ligne in tableau_matchs.to_dict("records"):
             matchs.append(MatchBasketball(
-                id=r.get("game_id"),
-                equipe1_id=r.get("team_id_home"),
-                equipe2_id=r.get("team_id_away"),
-                score1=r.get("pts_home"),
-                score2=r.get("pts_away"),
-                date=r.get("game_date"),
-                saison=r.get("season"),
-                season_type=r.get("season_type")
+                id=ligne.get("game_id"),
+                equipe1_id=ligne.get("team_id_home"),
+                equipe2_id=ligne.get("team_id_away"),
+                score1=ligne.get("pts_home"),
+                score2=ligne.get("pts_away"),
+                date=ligne.get("game_date"),
+                saison=ligne.get("season"),
+                season_type=ligne.get("season_type")
             ))
+
         return matchs

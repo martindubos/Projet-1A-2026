@@ -3,40 +3,53 @@ import datetime
 import pandas as pd
 from src.Model.Player import Player
 
+
 class BasketPlayerLoader():
     @staticmethod
     def load_all_player(dossier: str) -> dict:
-        player_file = os.path.join(dossier, "basketball_player.csv")
-        if not os.path.exists(player_file):
+        """
+        Charge tous les joueurs de basketball depuis le fichier CSV du dossier.
+        La taille est convertie du format américain pieds-pouces (ex: "6-5") en centimètres.
+        """
+        fichier_joueurs = os.path.join(dossier, "basketball_player.csv")
+        if not os.path.exists(fichier_joueurs):
             return {}
-            
-        dataframe_joueurs = pd.read_csv(player_file)
-        
-        res = {}
-        for r in dataframe_joueurs.to_dict("records"):
-            birthdate = None
-            if pd.notna(r.get("birthdate")):
-                try:
-                    d_str = str(r["birthdate"]).split(" ")[0]
-                    d = datetime.datetime.strptime(d_str, "%Y-%m-%d")
-                    birthdate = d.date()
-                except ValueError:
-                    pass
-                    
-            height_cm = None
-            h_str = str(r.get("height"))
-            if "-" in h_str:
-                parts = h_str.split("-")
-                if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
-                    height_cm = int(round(int(parts[0]) * 30.48 + int(parts[1]) * 2.54))
 
-            player_id = r.get("person_id")
-            res[player_id] = Player(
-                id=player_id,
-                lastname=r.get("last_name", "") if pd.notna(r.get("last_name")) else "",
-                firstname=r.get("first_name", "") if pd.notna(r.get("first_name")) else "",
-                birthdate=birthdate,
+        tableau_joueurs = pd.read_csv(fichier_joueurs)
+
+        joueurs = {}
+        for ligne in tableau_joueurs.to_dict("records"):
+
+            # Conversion de la date de naissance
+            date_naissance = None
+            date_brute = ligne.get("birthdate")
+            if date_brute is not None and pd.notna(date_brute):
+                try:
+                    # La date est au format "1990-05-22 00:00:00", on ne garde que la date
+                    date_str = str(date_brute).split(" ")[0]
+                    date_naissance = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
+                except ValueError:
+                    date_naissance = None
+
+            # Conversion de la taille : format américain "pieds-pouces" -> centimètres
+            # Exemple : "6-5" signifie 6 pieds et 5 pouces
+            taille_cm = None
+            taille_brute = str(ligne.get("height", ""))
+            if "-" in taille_brute:
+                parties = taille_brute.split("-")
+                if len(parties) == 2 and parties[0].isdigit() and parties[1].isdigit():
+                    pieds = int(parties[0])
+                    pouces = int(parties[1])
+                    taille_cm = int(round(pieds * 30.48 + pouces * 2.54))
+
+            id_joueur = ligne.get("person_id")
+            joueurs[id_joueur] = Player(
+                id=id_joueur,
+                lastname=ligne.get("last_name", "") if pd.notna(ligne.get("last_name")) else "",
+                firstname=ligne.get("first_name", "") if pd.notna(ligne.get("first_name")) else "",
+                birthdate=date_naissance,
                 country="",
-                height=height_cm
+                height=taille_cm
             )
-        return res
+
+        return joueurs
