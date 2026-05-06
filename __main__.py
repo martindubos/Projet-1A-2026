@@ -1,3 +1,4 @@
+1
 import datetime
 import os
 import pickle
@@ -32,14 +33,28 @@ CODE_TO_COUNTRY = {
     "BE": "Belgique", "AR": "Argentine", "BR": "Brésil"
 }
 
-def main():
-    configurations = {
-        "1": ("Tennis", "data/tennis"),
-        "2": ("Football", "data/football_european_leagues"),
-        "3": ("Basketball", "data/basketball"),
-        # "4": ("Volleyball", "data/volleyball"),
-        # "5": ("LoL", "data/league_of_legends")
+def charger_configurations():
+    config_file = "objets/config.p"
+    default_config = {
+        "1": ["Tennis", "Tennis", "data/tennis"],
+        "2": ["Football", "Football", "data/football_european_leagues"],
+        "3": ["Basketball", "Basketball", "data/basketball"]
     }
+    if os.path.exists(config_file):
+        with open(config_file, "rb") as f:
+            return pickle.load(f)
+    else:
+        os.makedirs(os.path.dirname(config_file), exist_ok=True)
+        with open(config_file, "wb") as f:
+            pickle.dump(default_config, f)
+        return default_config
+
+def sauvegarder_configurations(config):
+    with open("objets/config.p", "wb") as f:
+        pickle.dump(config, f)
+
+def main():
+    configurations = charger_configurations()
 
     while True:
         print("\n" + "="*30)
@@ -47,19 +62,35 @@ def main():
         print("="*30)
         print("1. Charger les donnees CSV")
         print("2. Consulter des statistiques")
-        print("3. Quitter")
+        print("3. Ajouter un nouveau jeu de donnees")
+        print("4. Quitter")
         
-        choix_menu = input("Que souhaitez-vous faire ? (1/2/3) : ")
+        choix_menu = input("Que souhaitez-vous faire ? (1/2/3/4) : ")
 
-        if choix_menu == "3":
+        if choix_menu == "4":
             print("Au revoir !")
             break
+            
+        elif choix_menu == "3":
+            print("\n-- Ajouter un nouveau jeu de donnees --")
+            nom_affichage = input("Nom a afficher dans le menu (ex: Mes Matchs Foot) : ").strip()
+            type_sport = input("Type de sport (Tennis, Football, Basketball) : ").strip()
+            dossier = input("Chemin vers le dossier contenant les fichiers CSV (ex: data/mon_foot) : ").strip()
+            
+            if not os.path.exists(dossier):
+                print(f"Attention: Le dossier '{dossier}' n'existe pas encore. Vous pourrez y placer vos CSV plus tard.")
+                
+            nouvel_index = str(len(configurations) + 1)
+            configurations[nouvel_index] = [nom_affichage, type_sport, dossier]
+            sauvegarder_configurations(configurations)
+            print(f"Le jeu de donnees '{nom_affichage}' a ete ajoute avec succes !")
+            continue
 
         elif choix_menu == "1":
             print("\n-- Chargement des donnees --")
             print("Pour quel sport voulez-vous charger les donnees ?")
-            for key, (nom, _) in configurations.items():
-                print(f"{key}. {nom}")
+            for key, val in configurations.items():
+                print(f"{key}. {val[0]}")
             print("A. Tous les sports disponibles")
             
             choix_sport = input("Votre choix : ").upper()
@@ -73,17 +104,21 @@ def main():
                 print("Choix invalide.")
                 continue
 
-            for nom, dossier in sports_a_charger:
+            for config_val in sports_a_charger:
+                nom = config_val[0]
+                type_sport = config_val[1]
+                dossier = config_val[2]
+                
                 print(f"\nChargement depuis CSV pour {nom}...")
-                nouveau_sport = Sport(nom, dossier)
+                nouveau_sport = Sport(nom, dossier, type_sport=type_sport)
                 sauvegarder_sport(nouveau_sport)
                 print(f"[{nom}] Les donnees ont ete chargees et sauvegardees.")
 
         elif choix_menu == "2":
             print("\n-- Consultation des Statistiques --")
             print("Choisissez un sport :")
-            for key, (nom, _) in configurations.items():
-                print(f"{key}. {nom}")
+            for key, val in configurations.items():
+                print(f"{key}. {val[0]}")
             
             choix_sport = input("Votre choix : ")
             if choix_sport not in configurations:
@@ -91,6 +126,7 @@ def main():
                 continue
                 
             nom_sport = configurations[choix_sport][0]
+            type_sport = configurations[choix_sport][1]
             
             # Chargement de l'objet sport memoire
             objet_sport = charger_sport(nom_sport)
@@ -98,8 +134,8 @@ def main():
                 print(f"Les donnees de {nom_sport} n'ont pas encore ete chargees. Veuillez d'abord choisir l'option 1 du menu.")
                 continue
                 
-            ex_joueur = "Novak Djokovic" if nom_sport.lower() == "tennis" else "Lionel Messi" if nom_sport.lower() == "football" else "Joueur Exemple"
-            ex_equipe = "France" if nom_sport.lower() == "tennis" else "Real Madrid" if nom_sport.lower() == "football" else "Equipe Exemple"
+            ex_joueur = "Novak Djokovic" if type_sport.lower() == "tennis" else "Lionel Messi" if type_sport.lower() == "football" else "Joueur Exemple"
+            ex_equipe = "France" if type_sport.lower() == "tennis" else "Real Madrid" if type_sport.lower() == "football" else "Equipe Exemple"
 
             # Sous-menu pour les statistiques
             print("\nQuel type de statistiques souhaitez-vous consulter ?")
@@ -457,27 +493,67 @@ def main():
                     continue
                 
                 nom_affiche = entite.nom_complet() if is_joueur else entite.nom
-                print(f"Calcul des points par saison pour {nom_affiche}...")
                 
-                points_par_saison = []
+                choix_metrique = input("Voulez-vous afficher l'evolution des Points (1) ou du Classement (2) ? ").strip()
+                afficher_classement = (choix_metrique == "2")
+                
+                print(f"Calcul des donnees par saison pour {nom_affiche}...")
+                
+                valeurs_par_saison = []
                 saisons_plot = []
                 
                 for s in saisons_disponibles:
                     classement_saison = objet_sport.calculer_classement(saison_filtre=s)
-                    pts = next((points for id_ent, points in classement_saison if id_ent == entite.id), 0)
-                    if pts > 0:
-                        saisons_plot.append(str(s))
-                        points_par_saison.append(pts)
-                        
-                if not points_par_saison:
-                    print("Aucun point trouve pour cette entite sur les saisons disponibles.")
+                    
+                    # Pour le football (ou les sports avec plusieurs ligues), on filtre par ligue
+                    if not is_joueur:
+                        league_id = None
+                        for m in objet_sport.matchs:
+                            if str(getattr(m, "saison", None)) == str(s) and (m.equipe1_id == entite.id or m.equipe2_id == entite.id):
+                                league_id = getattr(m, "league_id", None)
+                                if league_id is not None:
+                                    break
+                                    
+                        if league_id is not None:
+                            equipes_ligue = set()
+                            for m in objet_sport.matchs:
+                                if str(getattr(m, "saison", None)) == str(s) and getattr(m, "league_id", None) == league_id:
+                                    equipes_ligue.add(m.equipe1_id)
+                                    equipes_ligue.add(m.equipe2_id)
+                            classement_saison = [(id_ent, pts) for id_ent, pts in classement_saison if id_ent in equipes_ligue]
+                    
+                    
+                    if afficher_classement:
+                        # Trouver le rang
+                        rang = next((i + 1 for i, (id_ent, _) in enumerate(classement_saison) if id_ent == entite.id), None)
+                        if rang is not None:
+                            saisons_plot.append(str(s))
+                            valeurs_par_saison.append(rang)
+                    else:
+                        # Trouver les points
+                        pts = next((points for id_ent, points in classement_saison if id_ent == entite.id), 0)
+                        if pts > 0:
+                            saisons_plot.append(str(s))
+                            valeurs_par_saison.append(pts)
+                            
+                if not valeurs_par_saison:
+                    print("Aucune donnee trouvee pour cette entite sur les saisons disponibles.")
                     continue
                     
                 plt.figure(figsize=(10, 6))
-                plt.plot(saisons_plot, points_par_saison, marker='o', linestyle='-', color='b', linewidth=2, markersize=8)
-                plt.title(f"Evolution des points de {nom_affiche} par saison", fontsize=14)
+                plt.plot(saisons_plot, valeurs_par_saison, marker='o', linestyle='-', color='b', linewidth=2)
+                
+                if afficher_classement:
+                    plt.title(f"Evolution du classement - {nom_affiche}", fontsize=14)
+                    plt.ylabel("Position au classement", fontsize=12)
+                    plt.gca().invert_yaxis()  # La 1ere place en haut !
+                    from matplotlib.ticker import MaxNLocator
+                    plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+                else:
+                    plt.title(f"Evolution des points - {nom_affiche}", fontsize=14)
+                    plt.ylabel("Points", fontsize=12)
+                    
                 plt.xlabel("Saison", fontsize=12)
-                plt.ylabel("Points au classement", fontsize=12)
                 plt.grid(True, linestyle='--', alpha=0.7)
                 plt.xticks(rotation=45)
                 plt.tight_layout()

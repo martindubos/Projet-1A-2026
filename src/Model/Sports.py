@@ -3,8 +3,9 @@ from src.Parsers.MatchLoader.MatchLoader import MatchLoader
 from src.Parsers.TeamLoader.TeamLoader import TeamLoader
 
 class Sport:
-    def __init__(self, nom: str, dossier: str = None, sport_en_equipe: bool = False):
+    def __init__(self, nom: str, dossier: str = None, sport_en_equipe: bool = False, type_sport: str = None):
         self.nom = nom
+        self.type_sport = type_sport if type_sport else nom
         self.dossier = dossier
         self.sport_en_equipe = sport_en_equipe
         self.equipes = {}   # id -> Team
@@ -20,18 +21,18 @@ class Sport:
         print(f"Chargement des Donnees pour le sport: {self.nom}")
         
         try:
-            self.joueurs = PlayerLoader.load_all_player(self.nom, self.dossier)
+            self.joueurs = PlayerLoader.load_all_player(self.type_sport, self.dossier)
         except Exception as e:
             print(f"[{self.nom}] Erreur chargement joueurs: {e}")
             
         try:
-            self.equipes = TeamLoader.load_all_team(self.nom, self.dossier)
+            self.equipes = TeamLoader.load_all_team(self.type_sport, self.dossier)
         except Exception as e:
             # Some sports don't have teams, that's fine
             print(f"[{self.nom}] Erreur chargement equipes: {e}")
             
         try:
-            self.matchs = MatchLoader.load_all_match(self.nom, self.dossier)
+            self.matchs = MatchLoader.load_all_match(self.type_sport, self.dossier)
         except Exception as e:
             print(f"[{self.nom}] Erreur chargement matchs: {e}")
             

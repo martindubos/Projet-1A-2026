@@ -21,6 +21,7 @@ class TennisMatchLoader():
                     surface=r.get("surface"),
                     round=r.get("round"),
                     tournoi=r.get("tourney_name"),
-                    circuit=prefix.upper()
+                    circuit=prefix.upper(),
+                    saison=int(str(r.get("tourney_date"))[:4]) if pd.notna(r.get("tourney_date")) else 2024
                 ))
         return matchs

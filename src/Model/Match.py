@@ -15,12 +15,13 @@ class Match:
 
 class MatchTennis(Match):
     def __init__(self, *args, surface=None, round=None,
-                 tournoi=None, circuit=None, **kwargs):
+                 tournoi=None, circuit=None, saison=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.surface = surface   # Hard / Clay / Grass
         self.round   = round     # F, SF, QF, R16...
         self.tournoi = tournoi
         self.circuit = circuit   # ATP ou WTA
+        self.saison  = saison
 
 class MatchFootball(Match):
     def __init__(self, *args, league_id=None, saison=None,
