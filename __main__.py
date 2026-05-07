@@ -289,12 +289,19 @@ def main():
                             print(f"  - Taux de victoire : {taux_victoire:.1f}%")
 
                             if is_tennis:
-                                total_aces = sum(getattr(m, 'w_ace' if m.vainqueur_id() == joueur.id else 'l_ace', 0) or 0 for m in matchs_joueur)
-                                total_df = sum(getattr(m, 'w_df' if m.vainqueur_id() == joueur.id else 'l_df', 0) or 0 for m in matchs_joueur)
-                                total_svpt = sum(getattr(m, 'w_svpt' if m.vainqueur_id() == joueur.id else 'l_svpt', 0) or 0 for m in matchs_joueur)
-                                total_1stIn = sum(getattr(m, 'w_1stIn' if m.vainqueur_id() == joueur.id else 'l_1stIn', 0) or 0 for m in matchs_joueur)
-                                total_bpSaved = sum(getattr(m, 'w_bpSaved' if m.vainqueur_id() == joueur.id else 'l_bpSaved', 0) or 0 for m in matchs_joueur)
-                                total_bpFaced = sum(getattr(m, 'w_bpFaced' if m.vainqueur_id() == joueur.id else 'l_bpFaced', 0) or 0 for m in matchs_joueur)
+                                def get_val(m, attr):
+                                    v = getattr(m, attr, 0)
+                                    # Vérifie si c'est None ou NaN (NaN != NaN en Python)
+                                    if v is None or v != v:
+                                        return 0
+                                    return v
+
+                                total_aces = sum(get_val(m, 'w_ace' if m.vainqueur_id() == joueur.id else 'l_ace') for m in matchs_joueur)
+                                total_df = sum(get_val(m, 'w_df' if m.vainqueur_id() == joueur.id else 'l_df') for m in matchs_joueur)
+                                total_svpt = sum(get_val(m, 'w_svpt' if m.vainqueur_id() == joueur.id else 'l_svpt') for m in matchs_joueur)
+                                total_1stIn = sum(get_val(m, 'w_1stIn' if m.vainqueur_id() == joueur.id else 'l_1stIn') for m in matchs_joueur)
+                                total_bpSaved = sum(get_val(m, 'w_bpSaved' if m.vainqueur_id() == joueur.id else 'l_bpSaved') for m in matchs_joueur)
+                                total_bpFaced = sum(get_val(m, 'w_bpFaced' if m.vainqueur_id() == joueur.id else 'l_bpFaced') for m in matchs_joueur)
 
                                 print(f"  - Total Aces       : {int(total_aces)}")
                                 print(f"  - Double Fautes    : {int(total_df)}")
@@ -302,20 +309,6 @@ def main():
                                     print(f"  - 1er Service In   : {(total_1stIn / total_svpt * 100):.1f}%")
                                 if total_bpFaced > 0:
                                     print(f"  - Balles de break sauves : {(total_bpSaved / total_bpFaced * 100):.1f}%")
-                                
-                                print("\n>>> Resultats en competition :")
-                                results_by_tourney = {}
-                                for m in matchs_joueur:
-                                    if m.tournoi not in results_by_tourney:
-                                        results_by_tourney[m.tournoi] = []
-                                    results_by_tourney[m.tournoi].append(m.round)
-                                
-                                for tourney, rounds in results_by_tourney.items():
-                                    # On prend le "meilleur" round (plus loin dans le tournoi)
-                                    # Pour simplifier on affiche juste la liste des rounds atteints
-                                    unique_rounds = sorted(list(set(rounds)))
-                                    rounds_str = ", ".join(TENNIS_ROUND_MAP.get(r, r) for r in unique_rounds)
-                                    print(f"  - {tourney} : {rounds_str}")
 
                         if joueur.statistiques:
                             saisons_disponibles = sorted(joueur.statistiques.keys())
@@ -345,12 +338,23 @@ def main():
                                 if choix_stat_joueur == "0":
                                     print(f"\n>>> TOUTES LES STATISTIQUES ({saison_cle}) :")
                                     for k, v in stats.items():
-                                        val = TENNIS_ROUND_MAP.get(v, v) if k == "Meilleur resultat en Grand Chelem" else v
-                                        print(f"  - {k} : {val}")
+                                        if k == "Resultats en compétitions" and isinstance(v, dict):
+                                            print(f"  - {k} :")
+                                            for t, r in v.items():
+                                                print(f"    * {t} : {TENNIS_ROUND_MAP.get(r, r)}")
+                                        else:
+                                            val = TENNIS_ROUND_MAP.get(v, v) if k == "Meilleur resultat en Grand Chelem" else v
+                                            print(f"  - {k} : {val}")
                                 elif choix_stat_joueur.isdigit() and 1 <= int(choix_stat_joueur) <= len(keys):
                                     k = keys[int(choix_stat_joueur) - 1]
-                                    val = TENNIS_ROUND_MAP.get(stats[k], stats[k]) if k == "Meilleur resultat en Grand Chelem" else stats[k]
-                                    print(f"\n  - {k} : {val}")
+                                    v = stats[k]
+                                    if k == "Resultats en compétitions" and isinstance(v, dict):
+                                        print(f"\n  - {k} :")
+                                        for t, r in v.items():
+                                            print(f"    * {t} : {TENNIS_ROUND_MAP.get(r, r)}")
+                                    else:
+                                        val = TENNIS_ROUND_MAP.get(v, v) if k == "Meilleur resultat en Grand Chelem" else v
+                                        print(f"\n  - {k} : {val}")
                                 elif choix_stat_joueur == str(len(keys) + 1):
                                     break
                                 else:

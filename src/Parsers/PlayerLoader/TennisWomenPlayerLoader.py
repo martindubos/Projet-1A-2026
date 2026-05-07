@@ -38,52 +38,53 @@ class TennisWomenPlayerLoader:
         return resultat
 
     @staticmethod
-    def calculer_meilleur_resultat_grand_chelem(liste_matchs: list) -> dict:
+    def calculer_resultats_competitions(liste_matchs: list) -> dict:
         """
-        Trouve le meilleur résultat de chaque joueuse dans un Grand Chelem.
-        Le tour est converti en score numérique pour comparer facilement.
-        La joueuse qui remporte la finale reçoit la mention "W" (Winner).
+        Trouve le meilleur résultat de chaque joueuse pour CHAQUE tournoi.
+        On attribue un score numérique à chaque tour pour pouvoir comparer.
         """
+        # Plus le score est élevé, plus le tour est avancé
         poids_par_tour = {
-            "R128": 0, "R64": 1, "R32": 2, "R16": 3,
-            "QF": 4, "SF": 5, "F": 6
+            "R128": 1, "R64": 2, "R32": 3, "R16": 4,
+            "QF": 5, "SF": 6, "F": 7
         }
+        # Pour retrouver le nom du tour à partir de son score
         tour_par_poids = {poids: tour for tour, poids in poids_par_tour.items()}
 
-        meilleur_score_par_perdante = {}
-        gagnantes_finale = set()
+        # resultats_par_joueuse[id_joueuse][tourney_name] = meilleur_score
+        resultats_par_joueuse = {}
 
         for match in liste_matchs:
-            if match.get("tourney_level") != "G":
-                continue
-
+            tournoi = match.get("tourney_name")
             tour_actuel = match.get("round")
             id_perdante = match.get("loser_id")
             id_gagnante = match.get("winner_id")
 
-            if tour_actuel not in poids_par_tour:
+            if tour_actuel not in poids_par_tour or not tournoi:
                 continue
 
             score_actuel = poids_par_tour[tour_actuel]
 
+            # Mise à jour du meilleur résultat de la perdante dans ce tournoi
             if id_perdante is not None:
-                if id_perdante not in meilleur_score_par_perdante:
-                    meilleur_score_par_perdante[id_perdante] = score_actuel
-                else:
-                    if score_actuel > meilleur_score_par_perdante[id_perdante]:
-                        meilleur_score_par_perdante[id_perdante] = score_actuel
+                if id_perdante not in resultats_par_joueuse:
+                    resultats_par_joueuse[id_perdante] = {}
+                if tournoi not in resultats_par_joueuse[id_perdante] or score_actuel > resultats_par_joueuse[id_perdante][tournoi]:
+                    resultats_par_joueuse[id_perdante][tournoi] = score_actuel
 
+            # Si c'est une finale, la gagnante a gagné le tournoi
             if tour_actuel == "F" and id_gagnante is not None:
-                gagnantes_finale.add(id_gagnante)
+                if id_gagnante not in resultats_par_joueuse:
+                    resultats_par_joueuse[id_gagnante] = {}
+                resultats_par_joueuse[id_gagnante][tournoi] = 8 # Score pour "W" (Winner)
 
-        resultat = {}
-        for id_joueuse, meilleur_score in meilleur_score_par_perdante.items():
-            resultat[id_joueuse] = tour_par_poids[meilleur_score]
+        # Construction du dictionnaire final avec les noms des tours
+        tour_par_poids[8] = "W"
+        final_result = {}
+        for id_joueuse, stats_tournois in resultats_par_joueuse.items():
+            final_result[id_joueuse] = {t: tour_par_poids[s] for t, s in stats_tournois.items()}
 
-        for id_joueuse in gagnantes_finale:
-            resultat[id_joueuse] = "W"
-
-        return resultat
+        return final_result
 
     @staticmethod
     def load_all_player(dossier: str) -> dict:
@@ -104,7 +105,7 @@ class TennisWomenPlayerLoader:
 
         # Calcul des statistiques
         nb_tournois_gagnes = TennisWomenPlayerLoader.calculer_nombre_tournois_gagnes(liste_matchs)
-        meilleur_gc = TennisWomenPlayerLoader.calculer_meilleur_resultat_grand_chelem(liste_matchs)
+        resultats_competitions = TennisWomenPlayerLoader.calculer_resultats_competitions(liste_matchs)
 
         correspondance_main = {"L": "gauche", "R": "droite", "U": "inconnue"}
 
@@ -147,10 +148,10 @@ class TennisWomenPlayerLoader:
             else:
                 stats_joueuse["Tournois gagnes"] = 0
 
-            if id_joueuse in meilleur_gc:
-                stats_joueuse["Meilleur resultat en Grand Chelem"] = meilleur_gc[id_joueuse]
+            if id_joueuse in resultats_competitions:
+                stats_joueuse["Resultats en compétitions"] = resultats_competitions[id_joueuse]
             else:
-                stats_joueuse["Meilleur resultat en Grand Chelem"] = "Aucun"
+                stats_joueuse["Resultats en compétitions"] = {}
 
             joueuse.ajouter_statistiques(2024, stats_joueuse)
 

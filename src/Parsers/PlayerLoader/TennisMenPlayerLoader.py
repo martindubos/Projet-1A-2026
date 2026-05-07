@@ -40,60 +40,55 @@ class TennisMenPlayerLoader:
         return resultat
 
     @staticmethod
-    def calculer_meilleur_resultat_grand_chelem(liste_matchs: list) -> dict:
+    def calculer_resultats_competitions(liste_matchs: list) -> dict:
         """
-        Trouve le meilleur résultat de chaque joueur dans un Grand Chelem.
+        Trouve le meilleur résultat de chaque joueur pour CHAQUE tournoi.
         On attribue un score numérique à chaque tour pour pouvoir comparer.
-        Le joueur qui gagne la finale reçoit la mention "W" (Winner).
         """
         # Plus le score est élevé, plus le tour est avancé
         poids_par_tour = {
-            "R128": 0, "R64": 1, "R32": 2, "R16": 3,
-            "QF": 4, "SF": 5, "F": 6
+            "R128": 1, "R64": 2, "R32": 3, "R16": 4,
+            "QF": 5, "SF": 6, "F": 7
         }
         # Pour retrouver le nom du tour à partir de son score
         tour_par_poids = {poids: tour for tour, poids in poids_par_tour.items()}
 
-        # Meilleur score atteint avant de perdre, pour chaque joueur
-        meilleur_score_par_perdant = {}  # { id_joueur: score_max }
-        gagnants_finale = set()
+        # resultats_par_joueur[id_joueur][tourney_name] = meilleur_score
+        resultats_par_joueur = {}
 
         for match in liste_matchs:
-            # On ignore les matchs qui ne sont pas des Grand Chelems
-            if match.get("tourney_level") != "G":
-                continue
-
+            tournoi = match.get("tourney_name")
             tour_actuel = match.get("round")
             id_perdant = match.get("loser_id")
             id_gagnant = match.get("winner_id")
 
-            if tour_actuel not in poids_par_tour:
+            if tour_actuel not in poids_par_tour or not tournoi:
                 continue
 
             score_actuel = poids_par_tour[tour_actuel]
 
-            # Mise à jour du meilleur résultat du perdant
+            # Mise à jour du meilleur résultat du perdant dans ce tournoi
             if id_perdant is not None:
-                if id_perdant not in meilleur_score_par_perdant:
-                    meilleur_score_par_perdant[id_perdant] = score_actuel
-                else:
-                    if score_actuel > meilleur_score_par_perdant[id_perdant]:
-                        meilleur_score_par_perdant[id_perdant] = score_actuel
+                if id_perdant not in resultats_par_joueur:
+                    resultats_par_joueur[id_perdant] = {}
+                if tournoi not in resultats_par_joueur[id_perdant] or score_actuel > resultats_par_joueur[id_perdant][tournoi]:
+                    resultats_par_joueur[id_perdant][tournoi] = score_actuel
 
             # Si c'est une finale, le gagnant a gagné le tournoi
             if tour_actuel == "F" and id_gagnant is not None:
-                gagnants_finale.add(id_gagnant)
+                if id_gagnant not in resultats_par_joueur:
+                    resultats_par_joueur[id_gagnant] = {}
+                resultats_par_joueur[id_gagnant][tournoi] = 8 # Score pour "W" (Winner)
 
-        # Construction du dictionnaire final
-        resultat = {}
-        for id_joueur, meilleur_score in meilleur_score_par_perdant.items():
-            resultat[id_joueur] = tour_par_poids[meilleur_score]
+        # Construction du dictionnaire final avec les noms des tours
+        tour_par_poids[8] = "W"
+        final_result = {}
+        for id_joueur, stats_tournois in resultats_par_joueur.items():
+            # Format: "Tournoi1 (Resultat), Tournoi2 (Resultat)..."
+            # Mais on va stocker le dictionnaire brut pour que le main puisse l'afficher joliment
+            final_result[id_joueur] = {t: tour_par_poids[s] for t, s in stats_tournois.items()}
 
-        # Les vainqueurs de finale écrasent le résultat précédent avec "W"
-        for id_joueur in gagnants_finale:
-            resultat[id_joueur] = "W"
-
-        return resultat
+        return final_result
 
     @staticmethod
     def load_all_player(dossier: str) -> dict:
@@ -116,7 +111,7 @@ class TennisMenPlayerLoader:
 
         # Calcul des statistiques pour chaque joueur
         nb_tournois_gagnes = TennisMenPlayerLoader.calculer_nombre_tournois_gagnes(liste_matchs)
-        meilleur_gc = TennisMenPlayerLoader.calculer_meilleur_resultat_grand_chelem(liste_matchs)
+        resultats_competitions = TennisMenPlayerLoader.calculer_resultats_competitions(liste_matchs)
 
         # Correspondance entre le code CSV et un texte lisible
         correspondance_main = {"L": "gauche", "R": "droite", "U": "inconnue"}
@@ -161,10 +156,10 @@ class TennisMenPlayerLoader:
             else:
                 stats_joueur["Tournois gagnes"] = 0
 
-            if id_joueur in meilleur_gc:
-                stats_joueur["Meilleur resultat en Grand Chelem"] = meilleur_gc[id_joueur]
+            if id_joueur in resultats_competitions:
+                stats_joueur["Resultats en compétitions"] = resultats_competitions[id_joueur]
             else:
-                stats_joueur["Meilleur resultat en Grand Chelem"] = "Aucun"
+                stats_joueur["Resultats en compétitions"] = {}
 
             joueur.ajouter_statistiques(2024, stats_joueur)
 
