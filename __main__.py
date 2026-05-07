@@ -469,12 +469,10 @@ def main():
                 print("\n--- Evolution du Classement (Graphique) ---")
                 choix_type = input("Voir l'evolution d'un Joueur (1) ou d'une Equipe (2) ? ").strip()
                 if choix_type == "1":
-                    nom = input("Entrez le nom du joueur : ").strip()
-                    entite = objet_sport.get_joueur(nom)
+                    entite = rechercher_et_choisir_entite(objet_sport, 'joueur', "Entrez le nom du joueur : ")
                     is_joueur = True
                 elif choix_type == "2":
-                    nom = input("Entrez le nom de l'equipe : ").strip()
-                    entite = objet_sport.get_equipe(nom)
+                    entite = rechercher_et_choisir_entite(objet_sport, 'equipe', "Entrez le nom de l'equipe : ")
                     is_joueur = False
                 else:
                     print("Choix invalide.")
