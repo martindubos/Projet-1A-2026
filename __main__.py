@@ -508,18 +508,22 @@ def main():
                     
                     # Pour le football, les matchs ont un attribut league_id
                     # On identifie la ligue de l'équipe pour ne comparer que dans son championnat
-                    if not is_joueur:
+                    if not is_joueur and type_sport.lower() == "football":
                         ligue_de_lequipe = None
                         for m in objet_sport.matchs:
                             if str(m.saison) == str(s) and (m.equipe1_id == entite.id or m.equipe2_id == entite.id):
-                                ligue_de_lequipe = m.league_id
+                                try:
+                                    ligue_de_lequipe = m.league_id
+                                except AttributeError:
+                                    ligue_de_lequipe = None
+                                    
                                 if ligue_de_lequipe is not None:
                                     break
                                     
                         if ligue_de_lequipe is not None:
                             equipes_de_la_ligue = set()
                             for m in objet_sport.matchs:
-                                if str(m.saison) == str(s) and m.league_id == ligue_de_lequipe:
+                                if str(m.saison) == str(s) and getattr(m, 'league_id', None) == ligue_de_lequipe:
                                     equipes_de_la_ligue.add(m.equipe1_id)
                                     equipes_de_la_ligue.add(m.equipe2_id)
                             classement_saison = [(id_ent, pts) for id_ent, pts in classement_saison if id_ent in equipes_de_la_ligue]
