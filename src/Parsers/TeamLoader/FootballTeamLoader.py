@@ -44,6 +44,23 @@ class FootballTeamLoader():
                 nom_court=ligne.get("team_short_name", "")
             )
 
+        # Mapping des noms de pays
+        fichier_pays = os.path.join(dossier, "country.csv")
+        noms_pays = {}
+        if os.path.exists(fichier_pays):
+            df_pays = pd.read_csv(fichier_pays)
+            for _, r in df_pays.iterrows():
+                noms_pays[r['id']] = r['name']
+
+        # Attribution du pays aux équipes via match.csv
+        if os.path.exists(fichier_matchs):
+            df_matchs = pd.read_csv(fichier_matchs, usecols=['home_team_api_id', 'country_id'])
+            mapping_team_country = df_matchs.drop_duplicates('home_team_api_id').set_index('home_team_api_id')['country_id'].to_dict()
+            for id_e, eq in equipes.items():
+                c_id = mapping_team_country.get(id_e)
+                if c_id in noms_pays:
+                    eq.pays_id = noms_pays[c_id]
+
         # Calcul des statistiques à partir des matchs
         if not os.path.exists(fichier_matchs):
             return equipes
