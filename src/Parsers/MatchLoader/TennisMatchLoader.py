@@ -55,7 +55,25 @@ class TennisMatchLoader():
                     round=ligne.get("round"),
                     tournoi=ligne.get("tourney_name"),
                     circuit=circuit.upper(),
-                    saison=annee
+                    saison=annee,
+                    w_ace=ligne.get("w_ace"),
+                    w_df=ligne.get("w_df"),
+                    w_svpt=ligne.get("w_svpt"),
+                    w_1stIn=ligne.get("w_1stIn"),
+                    w_1stWon=ligne.get("w_1stWon"),
+                    w_2ndWon=ligne.get("w_2ndWon"),
+                    w_SvGms=ligne.get("w_SvGms"),
+                    w_bpSaved=ligne.get("w_bpSaved"),
+                    w_bpFaced=ligne.get("w_bpFaced"),
+                    l_ace=ligne.get("l_ace"),
+                    l_df=ligne.get("l_df"),
+                    l_svpt=ligne.get("l_svpt"),
+                    l_1stIn=ligne.get("l_1stIn"),
+                    l_1stWon=ligne.get("l_1stWon"),
+                    l_2ndWon=ligne.get("l_2ndWon"),
+                    l_SvGms=ligne.get("l_SvGms"),
+                    l_bpSaved=ligne.get("l_bpSaved"),
+                    l_bpFaced=ligne.get("l_bpFaced")
                 ))
 
         return matchs

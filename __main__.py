@@ -195,15 +195,26 @@ def main():
             )
 
             # Sous-menu pour les statistiques
+            is_tennis = type_sport.lower() == "tennis"
             print("\nQuel type de statistiques souhaitez-vous consulter ?")
-            print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
-            print(f"2. Rechercher les statistiques d'une equipe/club (Ex: {ex_equipe})")
-            print("3. Comparer deux joueurs / equipes (Face-a-Face)")
-            print("4. Afficher les joueurs/equipes par pays d'origine")
-            print("5. Afficher l'evolution du classement (Graphique)")
-            print("6. Retour au menu principal")
+            if is_tennis:
+                print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
+                print("2. Historique des confrontations entre 2 joueurs")
+                print("3. Retour au menu principal")
+            else:
+                print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
+                print(f"2. Rechercher les statistiques d'une equipe/club (Ex: {ex_equipe})")
+                print("3. Comparer deux joueurs / equipes (Face-a-Face)")
+                print("4. Afficher les joueurs/equipes par pays d'origine")
+                print("5. Afficher l'evolution du classement (Graphique)")
+                print("6. Retour au menu principal")
             
             choix_stat = input("Votre choix : ")
+            
+            # Ajustement des choix pour le Tennis
+            if is_tennis:
+                if choix_stat == "2": choix_stat = "3" # Redirige vers H2H
+                elif choix_stat == "3": choix_stat = "6" # Redirige vers Retour
             
             if choix_stat == "1":
                 nom_joueur = input("\nEntrez le nom du joueur (ou une partie du nom) : ").strip()
@@ -272,9 +283,39 @@ def main():
                                             victoires += 1
                             
                             taux_victoire = (victoires / total_matchs * 100)
-                            print(f"\n>>> STATISTIQUES GLOBALES (toutes saisons) :")
+                            titre_stats = "saisons disponibles" if is_tennis else "toutes saisons"
+                            print(f"\n>>> STATISTIQUES GLOBALES ({titre_stats}) :")
                             print(f"  - Matchs joues     : {total_matchs}")
                             print(f"  - Taux de victoire : {taux_victoire:.1f}%")
+
+                            if is_tennis:
+                                total_aces = sum(getattr(m, 'w_ace' if m.vainqueur_id() == joueur.id else 'l_ace', 0) or 0 for m in matchs_joueur)
+                                total_df = sum(getattr(m, 'w_df' if m.vainqueur_id() == joueur.id else 'l_df', 0) or 0 for m in matchs_joueur)
+                                total_svpt = sum(getattr(m, 'w_svpt' if m.vainqueur_id() == joueur.id else 'l_svpt', 0) or 0 for m in matchs_joueur)
+                                total_1stIn = sum(getattr(m, 'w_1stIn' if m.vainqueur_id() == joueur.id else 'l_1stIn', 0) or 0 for m in matchs_joueur)
+                                total_bpSaved = sum(getattr(m, 'w_bpSaved' if m.vainqueur_id() == joueur.id else 'l_bpSaved', 0) or 0 for m in matchs_joueur)
+                                total_bpFaced = sum(getattr(m, 'w_bpFaced' if m.vainqueur_id() == joueur.id else 'l_bpFaced', 0) or 0 for m in matchs_joueur)
+
+                                print(f"  - Total Aces       : {int(total_aces)}")
+                                print(f"  - Double Fautes    : {int(total_df)}")
+                                if total_svpt > 0:
+                                    print(f"  - 1er Service In   : {(total_1stIn / total_svpt * 100):.1f}%")
+                                if total_bpFaced > 0:
+                                    print(f"  - Balles de break sauves : {(total_bpSaved / total_bpFaced * 100):.1f}%")
+                                
+                                print("\n>>> Resultats en competition :")
+                                results_by_tourney = {}
+                                for m in matchs_joueur:
+                                    if m.tournoi not in results_by_tourney:
+                                        results_by_tourney[m.tournoi] = []
+                                    results_by_tourney[m.tournoi].append(m.round)
+                                
+                                for tourney, rounds in results_by_tourney.items():
+                                    # On prend le "meilleur" round (plus loin dans le tournoi)
+                                    # Pour simplifier on affiche juste la liste des rounds atteints
+                                    unique_rounds = sorted(list(set(rounds)))
+                                    rounds_str = ", ".join(TENNIS_ROUND_MAP.get(r, r) for r in unique_rounds)
+                                    print(f"  - {tourney} : {rounds_str}")
 
                         if joueur.statistiques:
                             saisons_disponibles = sorted(joueur.statistiques.keys())
@@ -363,9 +404,8 @@ def main():
                     print("Equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
 
             elif choix_stat == "3":
-                print("\n--- Face-a-Face (Head-to-Head) ---")
-                choix_type = input("Voulez-vous comparer des Joueurs (1) ou des Equipes (2) ? ").upper()
-                if choix_type == '1':
+                if is_tennis:
+                    print("\n--- Historique des confrontations entre 2 joueurs ---")
                     entite1 = rechercher_et_choisir_entite(objet_sport, 'joueur', "Nom du premier joueur : ")
                     if not entite1:
                         print("Premier joueur introuvable.")
@@ -374,18 +414,31 @@ def main():
                     if not entite2:
                         print("Deuxieme joueur introuvable.")
                         continue
-                elif choix_type == '2':
-                    entite1 = rechercher_et_choisir_entite(objet_sport, 'equipe', "Nom de la premiere equipe : ")
-                    if not entite1:
-                        print("Premiere equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
-                        continue
-                    entite2 = rechercher_et_choisir_entite(objet_sport, 'equipe', "Nom de la deuxieme equipe : ")
-                    if not entite2:
-                        print("Deuxieme equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
-                        continue
+                    choix_type = '1'
                 else:
-                    print("Choix invalide.")
-                    continue
+                    print("\n--- Face-a-Face (Head-to-Head) ---")
+                    choix_type = input("Voulez-vous comparer des Joueurs (1) ou des Equipes (2) ? ").upper()
+                    if choix_type == '1':
+                        entite1 = rechercher_et_choisir_entite(objet_sport, 'joueur', "Nom du premier joueur : ")
+                        if not entite1:
+                            print("Premier joueur introuvable.")
+                            continue
+                        entite2 = rechercher_et_choisir_entite(objet_sport, 'joueur', "Nom du deuxieme joueur : ")
+                        if not entite2:
+                            print("Deuxieme joueur introuvable.")
+                            continue
+                    elif choix_type == '2':
+                        entite1 = rechercher_et_choisir_entite(objet_sport, 'equipe', "Nom de la premiere equipe : ")
+                        if not entite1:
+                            print("Premiere equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
+                            continue
+                        entite2 = rechercher_et_choisir_entite(objet_sport, 'equipe', "Nom de la deuxieme equipe : ")
+                        if not entite2:
+                            print("Deuxieme equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
+                            continue
+                    else:
+                        print("Choix invalide.")
+                        continue
                 
                 if not entite1 or not entite2:
                     print("Une ou les deux entités n'ont pas été trouvées.")

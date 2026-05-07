@@ -16,13 +16,39 @@ class Match:
 
 class MatchTennis(Match):
     def __init__(self, *args, surface=None, round=None,
-                 tournoi=None, circuit=None, saison=None, **kwargs):
+                 tournoi=None, circuit=None, saison=None,
+                 w_ace=None, w_df=None, w_svpt=None, w_1stIn=None,
+                 w_1stWon=None, w_2ndWon=None, w_SvGms=None,
+                 w_bpSaved=None, w_bpFaced=None,
+                 l_ace=None, l_df=None, l_svpt=None, l_1stIn=None,
+                 l_1stWon=None, l_2ndWon=None, l_SvGms=None,
+                 l_bpSaved=None, l_bpFaced=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.surface = surface   # Hard / Clay / Grass
         self.round   = round     # F, SF, QF, R16...
         self.tournoi = tournoi
         self.circuit = circuit   # ATP ou WTA
         self.saison  = saison
+        # Stats du vainqueur
+        self.w_ace = w_ace
+        self.w_df = w_df
+        self.w_svpt = w_svpt
+        self.w_1stIn = w_1stIn
+        self.w_1stWon = w_1stWon
+        self.w_2ndWon = w_2ndWon
+        self.w_SvGms = w_SvGms
+        self.w_bpSaved = w_bpSaved
+        self.w_bpFaced = w_bpFaced
+        # Stats du perdant
+        self.l_ace = l_ace
+        self.l_df = l_df
+        self.l_svpt = l_svpt
+        self.l_1stIn = l_1stIn
+        self.l_1stWon = l_1stWon
+        self.l_2ndWon = l_2ndWon
+        self.l_SvGms = l_SvGms
+        self.l_bpSaved = l_bpSaved
+        self.l_bpFaced = l_bpFaced
 
 class MatchFootball(Match):
     def __init__(self, *args, league_id=None, saison=None,
