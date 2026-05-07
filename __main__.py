@@ -41,6 +41,9 @@ TENNIS_ROUND_MAP = {
     "R32": "16ème de finale",
     "R64": "2ème tour",
     "R128": "1er tour",
+    "Q-F": "Qualifications (Finale)",
+    "Q-SF": "Qualifications (Demi-finale)",
+    "Q-QF": "Qualifications (Quart de finale)",
     "Aucun": "Aucun"
 }
 
@@ -198,6 +201,7 @@ def main():
             is_tennis = type_sport.lower() == "tennis"
             is_foot = type_sport.lower() == "football"
             is_basket = type_sport.lower() == "basketball"
+            is_badminton = type_sport.lower() == "badminton"
             print("\nQuel type de statistiques souhaitez-vous consulter ?")
             if is_tennis:
                 print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
@@ -216,6 +220,10 @@ def main():
                 print("3. Historique de confrontations entre 2 equipes")
                 print("4. Vue detaillee de la NBA")
                 print("5. Retour au menu principal")
+            elif is_badminton:
+                print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
+                print("2. Historique des confrontations entre 2 joueurs")
+                print("3. Retour au menu principal")
             else:
                 print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
                 print(f"2. Rechercher les statistiques d'une equipe/club (Ex: {ex_equipe})")
@@ -228,7 +236,7 @@ def main():
             
             # Ajustement des choix pour le Tennis
             # Ajustement des choix pour le Football et le Tennis
-            if is_tennis:
+            if is_tennis or is_badminton:
                 if choix_stat == "2": choix_stat = "3" # Redirige vers H2H
                 elif choix_stat == "3": choix_stat = "6" # Redirige vers Retour
             
@@ -308,7 +316,7 @@ def main():
                             saisons_joueur = sorted(list(set(str(m.saison) for m in matchs_joueur if m.saison)))
                             saisons_str = ", ".join(saisons_joueur)
                             
-                            titre_stats = f"sur l'ensemble des saisons disponibles : {saisons_str}" if is_foot else (f"saisons disponibles : {saisons_str}" if is_tennis else "toutes saisons")
+                            titre_stats = f"sur l'ensemble des saisons disponibles : {saisons_str}" if is_foot else (f"saisons disponibles : {saisons_str}" if (is_tennis or is_badminton) else "toutes saisons")
                             print(f"\n>>> STATISTIQUES GLOBALES ({titre_stats}) :")
                             print(f"  - Matchs joues     : {total_matchs}")
                             if is_foot:
@@ -357,40 +365,34 @@ def main():
                                 stats = joueur.statistiques[saison_cle]
                                 keys = list(stats.keys())
 
-                            # Sous-menu des statistiques
-                            while True:
-                                print(f"\n=== MENU DES STATISTIQUES ({joueur.nom_complet()} - {saison_cle}) ===")
-                                print("0. Afficher toutes les statistiques")
-                                for i, k in enumerate(keys, 1):
-                                    print(f"{i}. {k}")
-                                print(f"{len(keys)+1}. Retour")
+                                # Sous-menu des statistiques
+                                while True:
+                                    print(f"\n=== MENU DES STATISTIQUES ({joueur.nom_complet()} - {saison_cle}) ===")
+                                    print("1. Afficher toutes les statistiques")
+                                    print("2. Retour")
 
-                                choix_stat_joueur = input("Votre choix : ").strip()
+                                    choix_s = input("Votre choix : ").strip()
+                                    if not choix_s:
+                                        continue
 
-                                if choix_stat_joueur == "0":
-                                    print(f"\n>>> TOUTES LES STATISTIQUES ({saison_cle}) :")
-                                    for k, v in stats.items():
-                                        if k == "Resultats en compétitions" and isinstance(v, dict):
-                                            print(f"  - {k} :")
-                                            for t, r in v.items():
-                                                print(f"    * {t} : {TENNIS_ROUND_MAP.get(r, r)}")
+                                    try:
+                                        idx = int(choix_s)
+                                        if idx == 1:
+                                            print(f"\n>>> TOUTES LES STATISTIQUES ({saison_cle}) :")
+                                            for k, v in stats.items():
+                                                if k == "Resultats en compétitions" and isinstance(v, dict):
+                                                    print(f"  - {k} :")
+                                                    for t, r in v.items():
+                                                        print(f"    * {t} : {TENNIS_ROUND_MAP.get(r, r)}")
+                                                else:
+                                                    val = TENNIS_ROUND_MAP.get(v, v) if k == "Meilleur resultat en Grand Chelem" else v
+                                                    print(f"  - {k} : {val}")
+                                        elif idx == 2:
+                                            break
                                         else:
-                                            val = TENNIS_ROUND_MAP.get(v, v) if k == "Meilleur resultat en Grand Chelem" else v
-                                            print(f"  - {k} : {val}")
-                                elif choix_stat_joueur.isdigit() and 1 <= int(choix_stat_joueur) <= len(keys):
-                                    k = keys[int(choix_stat_joueur) - 1]
-                                    v = stats[k]
-                                    if k == "Resultats en compétitions" and isinstance(v, dict):
-                                        print(f"\n  - {k} :")
-                                        for t, r in v.items():
-                                            print(f"    * {t} : {TENNIS_ROUND_MAP.get(r, r)}")
-                                    else:
-                                        val = TENNIS_ROUND_MAP.get(v, v) if k == "Meilleur resultat en Grand Chelem" else v
-                                        print(f"\n  - {k} : {val}")
-                                elif choix_stat_joueur == str(len(keys) + 1):
-                                    break
-                                else:
-                                    print("Choix invalide.")
+                                            print("Choix invalide (Veuillez choisir 1 ou 2).")
+                                    except ValueError:
+                                        print("Veuillez entrer un numero valide.")
                 elif not matches:
                     pass # Déjà affiché plus haut
 
@@ -494,7 +496,7 @@ def main():
                     print("Equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
 
             elif choix_stat == "3":
-                if is_tennis:
+                if is_tennis or is_badminton:
                     print("\n--- Historique des confrontations entre 2 joueurs ---")
                     entite1 = rechercher_et_choisir_entite(objet_sport, 'joueur', "Nom du premier joueur : ")
                     if not entite1:
