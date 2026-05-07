@@ -8,6 +8,23 @@ class BasketballMatchLoader():
     def load_all_match(dossier: str) -> list:
         """
         Charge tous les matchs de basketball depuis le fichier CSV du dossier.
+
+        Le fichier attendu est 'basketball_game.csv'. Chaque ligne contient :
+        - game_id       : identifiant unique du match
+        - team_id_home  : ID de l'équipe domicile
+        - team_id_away  : ID de l'équipe extérieure
+        - pts_home      : points de l'équipe domicile
+        - pts_away      : points de l'équipe extérieure
+        - game_date     : date du match
+        - season        : saison (ex: 2022)
+        - season_type   : type de saison ('Regular Season', 'Playoffs')
+
+        Args:
+            dossier (str): Chemin vers le dossier contenant basketball_game.csv.
+
+        Returns:
+            list: Liste d'objets MatchBasketball.
+                  Retourne [] si le fichier est introuvable.
         """
         fichier_matchs = os.path.join(dossier, "basketball_game.csv")
         if not os.path.exists(fichier_matchs):

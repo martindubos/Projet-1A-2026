@@ -8,7 +8,22 @@ class TennisMatchLoader():
     def load_all_match(dossier: str) -> list:
         """
         Charge tous les matchs de tennis depuis les fichiers CSV du dossier.
-        Les fichiers sont cherchés pour les deux circuits : ATP (hommes) et WTA (femmes).
+
+        Les fichiers sont cherchés pour les deux circuits :
+        - ATP (hommes) : 'atp_matches_2024.csv'
+        - WTA (femmes) : 'wta_matches_2024.csv'
+
+        Colonnes utilisées : winner_id, loser_id, tourney_date (YYYYMMDD),
+        surface, round, tourney_name.
+        En tennis, chaque joueur est l'entité directe (pas d'équipe).
+        Le score encode toujours 1/0 (victoire/défaite car il n'y a pas de match nul).
+        La saison est l'année extraite de tourney_date.
+
+        Args:
+            dossier (str): Chemin vers le dossier contenant les fichiers CSV.
+
+        Returns:
+            list: Liste d'objets MatchTennis (ATP + WTA combinés).
         """
         matchs = []
 

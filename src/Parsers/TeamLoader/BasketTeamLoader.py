@@ -5,6 +5,24 @@ from src.Model.Team import Team
 class BasketTeamLoader():
     @staticmethod
     def load_all_team(dossier: str) -> dict:
+        """
+        Charge toutes les équipes de basketball et calcule leurs statistiques globales.
+
+        Fichiers attendus dans le dossier :
+        - 'basketball_team.csv' : colonnes id, full_name, abbreviation
+        - 'basketball_game.csv' : colonnes team_id_home, team_id_away,
+                                  pts_home, pts_away
+
+        Les statistiques (matchs joués, victoires, défaites, points marqués/encaissés)
+        sont calculées sur l'ensemble des matchs disponibles et stockées sous la saison 2023.
+
+        Args:
+            dossier (str): Chemin vers le dossier contenant les fichiers CSV.
+
+        Returns:
+            dict: Dictionnaire {team_id: Team} avec statistiques.
+                  Retourne {} si basketball_team.csv est introuvable.
+        """
         team_file = os.path.join(dossier, "basketball_team.csv")
         if not os.path.exists(team_file):
             return {}

@@ -8,7 +8,23 @@ class FootballTeamLoader():
     def load_all_team(dossier: str) -> dict:
         """
         Charge toutes les équipes de football et calcule leurs statistiques par saison.
-        Les statistiques sont calculées en parcourant les matchs avec des boucles simples.
+
+        Fichiers attendus dans le dossier :
+        - 'team.csv'  : colonnes team_api_id, team_long_name, team_short_name
+        - 'match.csv' : colonnes season, home_team_api_id, away_team_api_id,
+                        home_team_goal, away_team_goal
+
+        Les statistiques sont calculées en parcourant les matchs avec des boucles simples
+        (sans opérations vectorielles Pandas complexes) pour plus de lisibilité.
+        Pour chaque saison, on calcule par équipe : matchs joués, victoires, nuls,
+        défaites, buts marqués, buts encaissés, points (V*3 + N), différence de buts.
+
+        Args:
+            dossier (str): Chemin vers le dossier contenant team.csv et match.csv.
+
+        Returns:
+            dict: Dictionnaire {team_api_id: Team} avec statistiques par saison.
+                  Retourne {} si team.csv est introuvable.
         """
         fichier_equipes = os.path.join(dossier, "team.csv")
         fichier_matchs = os.path.join(dossier, "match.csv")

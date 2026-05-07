@@ -37,7 +37,9 @@ def charger_configurations():
     default_config = {
         "1": ["Tennis", "Tennis", "data/tennis"],
         "2": ["Football", "Football", "data/football_european_leagues"],
-        "3": ["Basketball", "Basketball", "data/basketball"]
+        "3": ["Basketball", "Basketball", "data/basketball"],
+        "4": ["Badminton", "Badminton", "data/badminton"],
+        "5": ["Volleyball", "Volleyball", "data/volleyball"]
     }
     if os.path.exists(config_file):
         with open(config_file, "rb") as f:
@@ -133,18 +135,28 @@ def main():
                 print(f"Les donnees de {nom_sport} n'ont pas encore ete chargees. Veuillez d'abord choisir l'option 1 du menu.")
                 continue
                 
-            ex_joueur = "Novak Djokovic" if type_sport.lower() == "tennis" else "Lionel Messi" if type_sport.lower() == "football" else "Joueur Exemple"
-            ex_equipe = "France" if type_sport.lower() == "tennis" else "Real Madrid" if type_sport.lower() == "football" else "Equipe Exemple"
+            ex_joueur = (
+                "Novak Djokovic" if type_sport.lower() == "tennis"
+                else "Lionel Messi" if type_sport.lower() == "football"
+                else "Akane Yamaguchi" if type_sport.lower() == "badminton"
+                else "EGONU Paola Ogechi" if type_sport.lower() == "volleyball"
+                else "Joueur Exemple"
+            )
+            ex_equipe = (
+                "France" if type_sport.lower() == "tennis"
+                else "Real Madrid" if type_sport.lower() == "football"
+                else "FRA" if type_sport.lower() == "volleyball"
+                else "Equipe Exemple"
+            )
 
             # Sous-menu pour les statistiques
             print("\nQuel type de statistiques souhaitez-vous consulter ?")
             print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
             print(f"2. Rechercher les statistiques d'une equipe/club (Ex: {ex_equipe})")
-            print("3. Voir le classement global du sport")
-            print("4. Comparer deux joueurs / equipes (Face-a-Face)")
-            print("5. Afficher les joueurs/equipes par pays d'origine")
-            print("6. Afficher l'evolution du classement (Graphique)")
-            print("7. Retour au menu principal")
+            print("3. Comparer deux joueurs / equipes (Face-a-Face)")
+            print("4. Afficher les joueurs/equipes par pays d'origine")
+            print("5. Afficher l'evolution du classement (Graphique)")
+            print("6. Retour au menu principal")
             
             choix_stat = input("Votre choix : ")
             
@@ -301,74 +313,6 @@ def main():
                     print("Equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
 
             elif choix_stat == "3":
-                print("\n--- Options de Classement ---")
-                print("1. Classement Global (historique)")
-                print("2. Classement par Saison")
-                choix_c = input("Votre choix (1/2) : ")
-
-                saison_filtre = None
-                if choix_c == "2":
-                    # On collecte toutes les saisons disponibles dans les matchs
-                    saisons_disponibles = set()
-                    for m in objet_sport.matchs:
-                        if m.saison is not None:
-                            saisons_disponibles.add(m.saison)
-                    saisons_disponibles = sorted(list(saisons_disponibles))
-                    
-                    if not saisons_disponibles:
-                        print("Aucune saison disponible pour ce sport.")
-                    else:
-                        print(f"\nSaisons disponibles : {', '.join(map(str, saisons_disponibles))}")
-                        saison_entree = input("Choisissez une saison : ").strip()
-                        try:
-                            if any(isinstance(s, int) and s == int(saison_entree) for s in saisons_disponibles):
-                                saison_filtre = int(saison_entree)
-                            else:
-                                saison_filtre = saison_entree
-                        except ValueError:
-                            saison_filtre = saison_entree
-
-                # Recuperation du classement (global ou saisonnier)
-                classement = objet_sport.calculer_classement(saison_filtre=saison_filtre)
-                    
-                # Distinction par sexe si disponible
-                sexe_disponibles = set(j.sexe for j in objet_sport.joueurs.values() if j.sexe)
-                filtre_sexe = None
-                if len(sexe_disponibles) > 1:
-                    print("\nVoulez-vous filtrer par sexe ?")
-                    print("1. Hommes uniquement")
-                    print("2. Femmes uniquement")
-                    print("3. Classement global (tout sexe confondu)")
-                    choix_filtre = input("Votre choix : ")
-                    if choix_filtre == "1": filtre_sexe = "H"
-                    elif choix_filtre == "2": filtre_sexe = "F"
-
-                if filtre_sexe:
-                    classement_a_afficher = [
-                        (id_ent, pts) for id_ent, pts in classement 
-                        if id_ent in objet_sport.joueurs and objet_sport.joueurs[id_ent].sexe == filtre_sexe
-                    ]
-                    titre_classement = f"Classement {'Masculin' if filtre_sexe == 'H' else 'Feminin'}"
-                else:
-                    classement_a_afficher = classement
-                    titre_classement = "Classement global"
-
-                if saison_filtre:
-                    titre_classement += f" (Saison {saison_filtre})"
-
-                print(f"\n--- {titre_classement} pour {nom_sport} (Top 10) ---")
-                top = classement_a_afficher[:10]
-                if not top:
-                    print("Aucun resultat pour ces criteres.")
-                for i, (id_eq, points) in enumerate(top, 1):
-                    nom_affiche = f"ID_{id_eq}"
-                    if id_eq in objet_sport.joueurs:
-                        nom_affiche = objet_sport.joueurs[id_eq].nom_complet()
-                    elif id_eq in objet_sport.equipes:
-                        nom_affiche = objet_sport.equipes[id_eq].nom
-                    print(f"{i}. {nom_affiche} : {points} points")
-
-            elif choix_stat == "4":
                 print("\n--- Face-a-Face (Head-to-Head) ---")
                 choix_type = input("Voulez-vous comparer des Joueurs (1) ou des Equipes (2) ? ").upper()
                 if choix_type == '1':
@@ -412,7 +356,7 @@ def main():
                 if (victoires_1 + victoires_2 + nuls) == 0:
                     print("Aucune confrontation.")
 
-            elif choix_stat == "5":
+            elif choix_stat == "4":
                 pays_input = input("\nEntrez le nom du pays/nationalite : ").strip()
                 
                 # Distinction par sexe si disponible
@@ -459,7 +403,7 @@ def main():
                 if not joueurs_trouves and not equipes_trouvees:
                     print(f"Aucun resultat trouve pour le pays : {pays_input}")
 
-            elif choix_stat == "6":
+            elif choix_stat == "5":
                 if not plt:
                     print("\n[Erreur] matplotlib n'est pas installe. Installez-le avec 'pip install matplotlib'.")
                     continue
@@ -562,7 +506,7 @@ def main():
                 print(">>> Affichage du graphique dans une nouvelle fenetre. Fermez-la pour continuer.")
                 plt.show()
 
-            elif choix_stat == "7":
+            elif choix_stat == "6":
                 pass
             else:
                 print("Choix invalide.")

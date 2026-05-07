@@ -8,8 +8,21 @@ class FootballMatchLoader():
     def load_all_match(dossier: str) -> list:
         """
         Charge tous les matchs de football depuis le fichier CSV du dossier.
-        Pour chaque match, on récupère aussi la liste des joueurs qui ont joué
-        dans chaque équipe (colonnes home_player_1 à home_player_11).
+
+        Le fichier attendu est 'match.csv'. Pour chaque match, on récupère :
+        - les IDs des équipes domicile/extérieur
+        - les buts de chaque équipe
+        - la saison (ex: '2015/2016')
+        - la ligue (league_id)
+        - les compositions : joueurs home_player_1 à home_player_11
+          et away_player_1 à away_player_11
+
+        Args:
+            dossier (str): Chemin vers le dossier contenant match.csv.
+
+        Returns:
+            list: Liste d'objets MatchFootball.
+                  Retourne [] si le fichier est introuvable.
         """
         fichier_matchs = os.path.join(dossier, "match.csv")
         if not os.path.exists(fichier_matchs):
