@@ -54,6 +54,36 @@ def sauvegarder_configurations(config):
     with open("objets/config.p", "wb") as f:
         pickle.dump(config, f)
 
+def rechercher_et_choisir_entite(objet_sport, type_entite, prompt):
+    """
+    Recherche un joueur ou une equipe et permet a l'utilisateur de choisir si plusieurs resultats.
+    type_entite: 'joueur' ou 'equipe'
+    """
+    nom_recherche = input(prompt).strip()
+    if type_entite == 'joueur':
+        matches = objet_sport.get_joueur_matches(nom_recherche)
+    else:
+        matches = objet_sport.get_equipe_matches(nom_recherche)
+    
+    if not matches:
+        return None
+    
+    if len(matches) == 1:
+        return matches[0]
+    
+    print(f"\nPlusieurs {type_entite}s correspondent a '{nom_recherche}' :")
+    for i, m in enumerate(matches, 1):
+        if type_entite == 'joueur':
+            pays_label = CODE_TO_COUNTRY.get(m.pays, m.pays)
+            print(f"{i}. {m.nom_complet()} ({pays_label})")
+        else:
+            print(f"{i}. {m.nom} ({m.nom_court})")
+    
+    choix = input(f"Choisissez le numero (ou Entree pour annuler) : ")
+    if choix.isdigit() and 1 <= int(choix) <= len(matches):
+        return matches[int(choix) - 1]
+    return None
+
 def main():
     configurations = charger_configurations()
 
@@ -316,15 +346,23 @@ def main():
                 print("\n--- Face-a-Face (Head-to-Head) ---")
                 choix_type = input("Voulez-vous comparer des Joueurs (1) ou des Equipes (2) ? ").upper()
                 if choix_type == '1':
-                    nom1 = input("Nom du premier joueur : ")
-                    nom2 = input("Nom du deuxieme joueur : ")
-                    entite1 = objet_sport.get_joueur(nom1)
-                    entite2 = objet_sport.get_joueur(nom2)
+                    entite1 = rechercher_et_choisir_entite(objet_sport, 'joueur', "Nom du premier joueur : ")
+                    if not entite1:
+                        print("Premier joueur introuvable.")
+                        continue
+                    entite2 = rechercher_et_choisir_entite(objet_sport, 'joueur', "Nom du deuxieme joueur : ")
+                    if not entite2:
+                        print("Deuxieme joueur introuvable.")
+                        continue
                 elif choix_type == '2':
-                    nom1 = input("Nom de la premiere equipe : ")
-                    nom2 = input("Nom de la deuxieme equipe : ")
-                    entite1 = objet_sport.get_equipe(nom1)
-                    entite2 = objet_sport.get_equipe(nom2)
+                    entite1 = rechercher_et_choisir_entite(objet_sport, 'equipe', "Nom de la premiere equipe : ")
+                    if not entite1:
+                        print("Premiere equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
+                        continue
+                    entite2 = rechercher_et_choisir_entite(objet_sport, 'equipe', "Nom de la deuxieme equipe : ")
+                    if not entite2:
+                        print("Deuxieme equipe introuvable. Attention, certains sports comme le Tennis n'ont pas d'equipes.")
+                        continue
                 else:
                     print("Choix invalide.")
                     continue
