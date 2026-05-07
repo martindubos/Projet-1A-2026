@@ -48,8 +48,10 @@ class BasketPlayerLoader():
                 lastname=ligne.get("last_name", "") if pd.notna(ligne.get("last_name")) else "",
                 firstname=ligne.get("first_name", "") if pd.notna(ligne.get("first_name")) else "",
                 birthdate=date_naissance,
-                country="",
-                height=taille_cm
+                country="USA",
+                height=taille_cm,
+                weight=ligne.get("weight"),
+                position=ligne.get("position")
             )
 
         return joueurs

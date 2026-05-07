@@ -10,6 +10,8 @@ class Player:
         country: str,
         hand: str = None,
         height: int = None,
+        weight: int = None,
+        position: str = None,
         gender: str = None
     ) -> None:
         self.id = id
@@ -19,6 +21,8 @@ class Player:
         self.country = country
         self.hand = hand
         self.height = height
+        self.weight = weight
+        self.position = position
         self.gender = gender
         self.statistiques = {}  # { annee: {cle: valeur} }
 

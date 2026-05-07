@@ -197,6 +197,7 @@ def main():
             # Sous-menu pour les statistiques
             is_tennis = type_sport.lower() == "tennis"
             is_foot = type_sport.lower() == "football"
+            is_basket = type_sport.lower() == "basketball"
             print("\nQuel type de statistiques souhaitez-vous consulter ?")
             if is_tennis:
                 print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
@@ -209,6 +210,12 @@ def main():
                 print("4. Vue detaillee par championnat")
                 print("5. Voir l'evolution d'un joueur ou d'une equipe (Graphique)")
                 print("6. Retour au menu principal")
+            elif is_basket:
+                print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
+                print(f"2. Rechercher les statistiques d'une equipe (Ex: {ex_equipe})")
+                print("3. Historique de confrontations entre 2 equipes")
+                print("4. Vue detaillee de la NBA")
+                print("5. Retour au menu principal")
             else:
                 print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
                 print(f"2. Rechercher les statistiques d'une equipe/club (Ex: {ex_equipe})")
@@ -253,6 +260,9 @@ def main():
                     print(f"Nom complet: {joueur.nom_complet()}")
                     if joueur.date_naissance: print(f"Date de naissance: {joueur.date_naissance.strftime('%d/%m/%Y')}")
                     if joueur.taille: print(f"Taille: {joueur.taille} cm")
+                    if is_basket:
+                        if hasattr(joueur, 'weight') and joueur.weight: print(f"Poids: {joueur.weight} lbs")
+                        if hasattr(joueur, 'position') and joueur.position: print(f"Poste: {joueur.position}")
                     if not is_foot:
                         print(f"Pays: {CODE_TO_COUNTRY.get(joueur.pays, joueur.pays)}")
 
@@ -302,13 +312,10 @@ def main():
                             print(f"\n>>> STATISTIQUES GLOBALES ({titre_stats}) :")
                             print(f"  - Matchs joues     : {total_matchs}")
                             if is_foot:
-                                total_buts_equipe = 0
-                                for m in matchs_joueur:
-                                    role = "dom" if joueur.id in getattr(m, 'joueurs_dom', []) else "ext"
-                                    buts = m.score1 if role == "dom" else m.score2
-                                    total_buts_equipe += buts
-                                # Taux de victoire enleve pour le foot
-                                print(f"  - Buts marques par l'equipe (en sa presence) : {total_buts_equipe}")
+                                print(f"\nButs marques par l'equipe (en sa presence) : {victoires}")
+                            elif is_basket:
+                                # Plus de stats moyennes pour le basket (data manquante)
+                                pass
                             else:
                                 taux_victoire = (victoires / total_matchs * 100)
                                 print(f"  - Taux de victoire : {taux_victoire:.1f}%")
@@ -427,6 +434,7 @@ def main():
                             
                         if saison_cle in equipe.statistiques:
                             print(f"\n>>> STATISTIQUES ({saison_cle}) :")
+                            stats = equipe.statistiques[saison_cle]
                             
                             if is_foot:
                                 # On identifie la ligue de l'équipe pour cette saison
@@ -452,8 +460,34 @@ def main():
                                         pts = next((p for id_e, p in classement_ligue if id_e == equipe.id), 0)
                                         print(f"  - Points : {pts}")
 
-                            for k, v in equipe.statistiques[saison_cle].items():
-                                print(f"  - {k} : {v}")
+                            if is_basket:
+                                print(f"  - Points par match (PPG)  : {stats.get('PPG', 'N/A')}")
+                                print(f"  - Rebonds par match (RPG) : {stats.get('RPG', 'N/A')}")
+                                print(f"  - Passes par match (APG)  : {stats.get('APG', 'N/A')}")
+                                print(f"  - True Shooting % (TS%)   : {stats.get('TS%', 'N/A')}%")
+                                
+                                print(f"\n>>> STATISTIQUES AVANCEES :")
+                                print(f"  - Net Rating      : {stats.get('Net Rating', 'N/A')}")
+                                print(f"  - OffRtg / DefRtg : {stats.get('OffRtg', 'N/A')} / {stats.get('DefRtg', 'N/A')}")
+                                print(f"  - eFG%            : {stats.get('eFG%', 'N/A')}%")
+                                print(f"  - Pace (Rythme)   : {stats.get('Pace', 'N/A')}")
+                                print(f"  - AST/TOV         : {stats.get('AST/TOV', 'N/A')}")
+                                
+                                print(f"\n{'='*60}")
+                                print("LEGENDE DES STATISTIQUES BASKETBALL :")
+                                print("-" * 60)
+                                print("PPG/RPG/APG : Moyennes de Points, Rebonds et Passes par match.")
+                                print("TS%         : True Shooting % (Efficacite globale incluant les lancers francs).")
+                                print("Net Rating  : Difference de points marques/encaisses sur 100 possessions.")
+                                print("OffRtg      : Points marques pour 100 possessions.")
+                                print("DefRtg      : Points encaisses pour 100 possessions.")
+                                print("eFG%        : Efficacite au tir (ajuste la valeur des tirs a 3 points).")
+                                print("Pace        : Nombre de possessions estimees par match (48 minutes).")
+                                print("AST/TOV     : Ratio Passes decisives / Pertes de balle.")
+                                print(f"{'='*60}")
+                            else:
+                                for k, v in stats.items():
+                                    print(f"  - {k} : {v}")
                         else:
                             print("Saison invalide ou introuvable.")
                 else:
@@ -471,8 +505,9 @@ def main():
                         print("Deuxieme joueur introuvable.")
                         continue
                     choix_type = '1'
-                elif is_foot:
-                    print("\n--- Comparer deux equipes ---")
+                elif is_foot or is_basket:
+                    titre = "Comparer deux equipes" if is_foot else "Historique de confrontations entre 2 equipes"
+                    print(f"\n--- {titre} ---")
                     entite1 = rechercher_et_choisir_entite(objet_sport, 'equipe', "Nom de la premiere equipe : ")
                     if not entite1:
                         print("Premiere equipe introuvable.")
@@ -535,7 +570,194 @@ def main():
                     print("Aucune confrontation.")
 
             elif choix_stat == "4":
-                if is_foot:
+                if is_basket:
+                    saisons_disponibles = sorted(list(set(m.saison for m in objet_sport.matchs if m.saison)))
+                    if not saisons_disponibles:
+                        print("Aucune donnee de match disponible.")
+                        continue
+                    print(f"Saisons disponibles : {', '.join(saisons_disponibles)}")
+                    s = input("Quelle saison ? : ").strip()
+                    if s not in saisons_disponibles:
+                        print("Saison invalide.")
+                        continue
+                    
+                    print("\n--- VUE DETAILLEE NBA ---")
+                    print("1. Phase Regulière")
+                    print("2. Playoffs")
+                    print("3. Stats globales")
+                    choix_nba = input("Votre choix : ")
+                    
+                    if choix_nba == "1":
+                        east_ids = {1610612737, 1610612738, 1610612751, 1610612766, 1610612741, 1610612739, 1610612765, 1610612754, 1610612748, 1610612749, 1610612752, 1610612753, 1610612755, 1610612761, 1610612764}
+                        west_ids = {1610612743, 1610612744, 1610612745, 1610612746, 1610612747, 1610612763, 1610612750, 1610612740, 1610612760, 1610612756, 1610612757, 1610612758, 1610612759, 1610612762, 1610612742}
+                        bilans = {}
+                        for m in objet_sport.matchs:
+                            if m.saison == s and getattr(m, 'season_type', '') == 'Regular Season':
+                                for id_e in [m.equipe1_id, m.equipe2_id]:
+                                    if id_e not in bilans: bilans[id_e] = [0, 0]
+                                winner = m.vainqueur_id()
+                                if winner:
+                                    bilans[winner][0] += 1
+                                    loser = m.equipe1_id if winner == m.equipe2_id else m.equipe2_id
+                                    bilans[loser][1] += 1
+                                    
+                        def afficher_conf(nom_conf, ids):
+                            print(f"\n>>> CONFERENCE {nom_conf.upper()}")
+                            conf_stats = []
+                            for id_e, b in bilans.items():
+                                if id_e in ids:
+                                    eq = objet_sport.equipes.get(id_e)
+                                    wins, losses = b
+                                    pct = wins / (wins + losses) if (wins + losses) > 0 else 0
+                                    conf_stats.append({'nom': eq.nom if eq else f"ID {id_e}", 'w': wins, 'l': losses, 'pct': pct})
+                            conf_stats.sort(key=lambda x: x['pct'], reverse=True)
+                            header = f"{'Pl.':<3} | {'Equipe':<25} | {'V-D':<7} | {'%':<5}"
+                            print("-" * len(header))
+                            print(header); print("-" * len(header))
+                            for i, st in enumerate(conf_stats, 1):
+                                color = "\033[94m" if 1 <= i <= 6 else ("\033[93m" if 7 <= i <= 8 else "")
+                                reset = "\033[0m" if color else ""
+                                print(f"{color}{i:<3} | {st['nom']:<25} | {st['w']}-{st['l']:<5} | {st['pct']:.3f}{reset}")
+                            print("-" * len(header))
+                        afficher_conf("East", east_ids); afficher_conf("West", west_ids)
+                        print("Legende : \033[94mPlay-off (1-6)\033[0m | \033[93mPlay-in (7-8)\033[0m")
+
+                    elif choix_nba == "2":
+                        playoff_matchs = [m for m in objet_sport.matchs if m.saison == s and getattr(m, 'season_type', '') in ['Playoffs', 'Play-In']]
+                        if not playoff_matchs:
+                            print("Aucun match de playoffs trouve.")
+                        else:
+                            east_ids = {1610612737, 1610612738, 1610612751, 1610612766, 1610612741, 1610612739, 1610612765, 1610612754, 1610612748, 1610612749, 1610612752, 1610612753, 1610612755, 1610612761, 1610612764}
+                            
+                            series_data = {} # (team1, team2) -> {'wins': [w1, w2], 'type': 'Playoffs'/'Play-In', 'first_date': date}
+                            for m in playoff_matchs:
+                                teams = tuple(sorted([m.equipe1_id, m.equipe2_id]))
+                                if teams not in series_data:
+                                    series_data[teams] = {'wins': [0, 0], 'type': getattr(m, 'season_type', 'Playoffs'), 'first_date': m.date}
+                                winner = m.vainqueur_id()
+                                if winner == teams[0]: series_data[teams]['wins'][0] += 1
+                                elif winner == teams[1]: series_data[teams]['wins'][1] += 1
+                            
+                            # Categorization
+                            rounds = {
+                                "Play-In East": [], "Play-In West": [],
+                                "1er Tour East": [], "1er Tour West": [],
+                                "Demi-finales East": [], "Demi-finales West": [],
+                                "Finales de Conference East": [], "Finales de Conference West": [],
+                                "Finales NBA": []
+                            }
+                            
+                            for (id1, id2), data in series_data.items():
+                                eq1, eq2 = objet_sport.equipes.get(id1), objet_sport.equipes.get(id2)
+                                n1, n2 = eq1.nom if eq1 else str(id1), eq2.nom if eq2 else str(id2)
+                                w1, w2 = data['wins']
+                                score_str = f"{n1} {w1}-{w2} {n2}" if w1 >= w2 else f"{n2} {w2}-{w1} {n1}"
+                                
+                                is_east = id1 in east_ids and id2 in east_ids
+                                is_west = id1 not in east_ids and id2 not in east_ids
+                                
+                                if data['type'] == 'Play-In':
+                                    if is_east: rounds["Play-In East"].append(score_str)
+                                    else: rounds["Play-In West"].append(score_str)
+                                elif not is_east and not is_west:
+                                    rounds["Finales NBA"].append(score_str)
+                                else:
+                                    # Heuristique basée sur le nombre de victoires max pour déterminer le tour
+                                    # Ou simplement le nombre de matchs joués dans la série?
+                                    conf = "East" if is_east else "West"
+                                    # On peut aussi regarder le nombre de séries déjà trouvées pour ce tour
+                                    wins_max = max(w1, w2)
+                                    if wins_max <= 1: # Play-in possiblement marqué comme Playoffs
+                                        rounds[f"Play-In {conf}"].append(score_str)
+                                    else:
+                                        # On va trier par date pour répartir dans les tours
+                                        pass
+                            
+                            # Approche simplifiée par date pour les tours Playoffs
+                            all_series = []
+                            for (id1, id2), data in series_data.items():
+                                if data['type'] == 'Playoffs':
+                                    all_series.append({'teams': (id1, id2), 'data': data})
+                            all_series.sort(key=lambda x: x['data']['first_date'] if x['data']['first_date'] else "")
+                            
+                            # On répartit : les 8 premières = 1er tour, les 4 suivantes = demis, 2 = finales conf, 1 = NBA finals
+                            po_series = [s for s in all_series if (s['teams'][0] in east_ids and s['teams'][1] in east_ids) or (s['teams'][0] not in east_ids and s['teams'][1] not in east_ids)]
+                            finals_series = [s for s in all_series if s not in po_series]
+                            
+                            # Répartition par date
+                            for i, s in enumerate(po_series):
+                                id1, id2 = s['teams']; w1, w2 = s['data']['wins']
+                                eq1, eq2 = objet_sport.equipes.get(id1), objet_sport.equipes.get(id2)
+                                n1, n2 = eq1.nom if eq1 else str(id1), eq2.nom if eq2 else str(id2)
+                                score_str = f"{n1} {w1}-{w2} {n2}" if w1 >= w2 else f"{n2} {w2}-{w1} {n1}"
+                                conf = "East" if id1 in east_ids else "West"
+                                
+                                if i < 8: rounds[f"1er Tour {conf}"].append(score_str)
+                                elif i < 12: rounds[f"Demi-finales {conf}"].append(score_str)
+                                else: rounds[f"Finales de Conference {conf}"].append(score_str)
+                            
+                            for s in finals_series:
+                                id1, id2 = s['teams']; w1, w2 = s['data']['wins']
+                                eq1, eq2 = objet_sport.equipes.get(id1), objet_sport.equipes.get(id2)
+                                n1, n2 = eq1.nom if eq1 else str(id1), eq2.nom if eq2 else str(id2)
+                                score_str = f"{n1} {w1}-{w2} {n2}" if w1 >= w2 else f"{n2} {w2}-{w1} {n1}"
+                                rounds["Finales NBA"].append(score_str)
+
+                            print(f"\n>>> RÉSULTATS PLAYOFFS {s}")
+                            for r_name, scores in rounds.items():
+                                if scores:
+                                    print(f"\n--- {r_name.upper()} ---")
+                                    for sc in scores: print(f"  {sc}")
+
+                    elif choix_nba == "3":
+                        matchs_saison = [m for m in objet_sport.matchs if m.saison == s]
+                        if not matchs_saison: print("Aucune donnee.")
+                        else:
+                            total_pts = sum(m.score1 + m.score2 for m in matchs_saison)
+                            moy_ligue = total_pts / len(matchs_saison)
+                            ot_matchs = len([m for m in matchs_saison if hasattr(m, 'min') and m.min > 240])
+                            prolifique = max(matchs_saison, key=lambda m: m.score1 + m.score2)
+                            top_score = max(max(m.score1, m.score2) for m in matchs_saison)
+                            po_matchs = sorted([m for m in matchs_saison if getattr(m, 'season_type', '') == 'Playoffs'], key=lambda m: m.date if m.date else "")
+                            champion = objet_sport.equipes.get(po_matchs[-1].vainqueur_id()).nom if po_matchs else "Inconnu"
+                            bilans = {}
+                            for m in [m for m in matchs_saison if getattr(m, 'season_type', '') == 'Regular Season']:
+                                for id_e in [m.equipe1_id, m.equipe2_id]:
+                                    if id_e not in bilans: bilans[id_e] = [0, 0]
+                                w = m.vainqueur_id(); l = m.equipe1_id if w == m.equipe2_id else m.equipe2_id
+                                if w: bilans[w][0] += 1; bilans[l][1] += 1
+                            def get_nom(id_e): return objet_sport.equipes.get(id_e).nom if id_e in objet_sport.equipes else str(id_e)
+                            best_bilan_id = max(bilans.items(), key=lambda x: x[1][0]/(x[1][0]+x[1][1]) if (x[1][0]+x[1][1])>0 else 0)[0]
+                            worst_bilan_id = min(bilans.items(), key=lambda x: x[1][0]/(x[1][0]+x[1][1]) if (x[1][0]+x[1][1])>0 else 0)[0]
+                            best_nr_team = max(objet_sport.equipes.values(), key=lambda e: e.statistiques.get(s, {}).get('Net Rating', -999))
+                            best_at_team = max(objet_sport.equipes.values(), key=lambda e: e.statistiques.get(s, {}).get('AST/TOV', 0))
+                            print(f"\n>>> STATS GLOBALES NBA - {s}")
+                            print(f"  - Moyenne points/match : {moy_ligue:.1f}\n  - Matchs en prolongation : {ot_matchs}")
+                            print(f"  - Prolifique : {prolifique.score1 + prolifique.score2} pts ({get_nom(prolifique.equipe1_id)} vs {get_nom(prolifique.equipe2_id)})")
+                            print(f"  - Score max : {top_score} pts\n  - Champion : {champion}")
+                            print(f"  - Meilleur bilan : {get_nom(best_bilan_id)} ({bilans[best_bilan_id][0]}-{bilans[best_bilan_id][1]})")
+                            print(f"  - Pire bilan : {get_nom(worst_bilan_id)} ({bilans[worst_bilan_id][0]}-{bilans[worst_bilan_id][1]})")
+                            print(f"  - Meilleur Net Rating : {best_nr_team.nom} ({best_nr_team.statistiques.get(s, {}).get('Net Rating')})")
+                            print(f"  - Meilleur AST/TOV : {best_at_team.nom} ({best_at_team.statistiques.get(s, {}).get('AST/TOV')})")
+                            if plt:
+                                # Bar plot des 5 meilleures attaques
+                                top_att = sorted(bilans.keys(), key=lambda id_e: objet_sport.equipes.get(id_e).statistiques.get(s, {}).get('PPG', 0), reverse=True)[:5]
+                                noms_att = [get_nom(id_e) for id_e in top_att]
+                                ppg_att = [objet_sport.equipes.get(id_e).statistiques.get(s, {}).get('PPG', 0) for id_e in top_att]
+                                
+                                plt.figure(figsize=(10, 6))
+                                plt.bar(noms_att, ppg_att, color='orange', edgecolor='brown')
+                                plt.title(f"Top 5 des meilleures attaques (Points par match) - NBA {s}")
+                                plt.xlabel("Equipes")
+                                plt.ylabel("Points par match (PPG)")
+                                plt.ylim(min(ppg_att) - 5, max(ppg_att) + 5)
+                                for i, v in enumerate(ppg_att):
+                                    plt.text(i, v + 0.5, f"{v:.1f}", ha='center', fontweight='bold')
+                                plt.tight_layout()
+                                plt.show()
+                    continue
+
+                elif is_foot:
                     pays_input = input("\nEntrez le nom du pays ou du championnat (ex: France, England...) : ").strip()
                     
                     target_league_id = None
@@ -668,6 +890,9 @@ def main():
                     print(f"Aucun resultat trouve pour le pays : {pays_input}")
 
             elif choix_stat == "5":
+                if is_basket:
+                    # Retour au menu principal
+                    continue
                 if is_foot:
                     # On demande directement l'evolution
                     pass 
@@ -782,6 +1007,9 @@ def main():
                 plt.show()
 
             elif choix_stat == "6":
+                if is_basket:
+                    print("Choix invalide.")
+                    continue
                 pass
             else:
                 print("Choix invalide.")
