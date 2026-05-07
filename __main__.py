@@ -32,6 +32,18 @@ CODE_TO_COUNTRY = {
     "BE": "Belgique", "AR": "Argentine", "BR": "Brésil"
 }
 
+TENNIS_ROUND_MAP = {
+    "W": "Vainqueur",
+    "F": "Finaliste",
+    "SF": "Demi-finaliste",
+    "QF": "Quart de finaliste",
+    "R16": "8ème de finale",
+    "R32": "16ème de finale",
+    "R64": "2ème tour",
+    "R128": "1er tour",
+    "Aucun": "Aucun"
+}
+
 def charger_configurations():
     config_file = "objets/config.p"
     default_config = {
@@ -168,6 +180,7 @@ def main():
             ex_joueur = (
                 "Novak Djokovic" if type_sport.lower() == "tennis"
                 else "Lionel Messi" if type_sport.lower() == "football"
+                else "Stephen Curry" if type_sport.lower() == "basketball"
                 else "Akane Yamaguchi" if type_sport.lower() == "badminton"
                 else "EGONU Paola Ogechi" if type_sport.lower() == "volleyball"
                 else "Joueur Exemple"
@@ -175,6 +188,7 @@ def main():
             ex_equipe = (
                 "France" if type_sport.lower() == "tennis"
                 else "Real Madrid" if type_sport.lower() == "football"
+                else "Golden State Warriors" if type_sport.lower() == "basketball"
                 else "FRA" if type_sport.lower() == "volleyball"
                 else "Equipe Exemple"
             )
@@ -286,10 +300,12 @@ def main():
                                 if choix_stat_joueur == "0":
                                     print(f"\n>>> TOUTES LES STATISTIQUES ({saison_cle}) :")
                                     for k, v in stats.items():
-                                        print(f"  - {k} : {v}")
+                                        val = TENNIS_ROUND_MAP.get(v, v) if k == "Meilleur resultat en Grand Chelem" else v
+                                        print(f"  - {k} : {val}")
                                 elif choix_stat_joueur.isdigit() and 1 <= int(choix_stat_joueur) <= len(keys):
                                     k = keys[int(choix_stat_joueur) - 1]
-                                    print(f"\n  - {k} : {stats[k]}")
+                                    val = TENNIS_ROUND_MAP.get(stats[k], stats[k]) if k == "Meilleur resultat en Grand Chelem" else stats[k]
+                                    print(f"\n  - {k} : {val}")
                                 elif choix_stat_joueur == str(len(keys) + 1):
                                     break
                                 else:
