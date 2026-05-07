@@ -111,7 +111,8 @@ def main():
                 dossier = config_val[2]
                 
                 print(f"\nChargement depuis CSV pour {nom}...")
-                nouveau_sport = Sport(nom, dossier, type_sport=type_sport)
+                est_equipe = (type_sport.lower() in ["football", "basketball", "volleyball"])
+                nouveau_sport = Sport(nom, dossier, sport_en_equipe=est_equipe, type_sport=type_sport)
                 sauvegarder_sport(nouveau_sport)
                 print(f"[{nom}] Les donnees ont ete chargees et sauvegardees.")
 
@@ -177,6 +178,8 @@ def main():
                     choix_j = input("Choisissez le numero du joueur (ou Entree pour annuler) : ")
                     if choix_j.isdigit() and 1 <= int(choix_j) <= len(matches):
                         joueur = matches[int(choix_j) - 1]
+                    else:
+                        print("Choix invalide ou annule.")
 
                 if joueur:
                     print(f"\n--- Fiche du joueur ---")
@@ -186,7 +189,8 @@ def main():
                     print(f"Pays: {CODE_TO_COUNTRY.get(joueur.pays, joueur.pays)}")
 
                     # --- Statistiques globales calculées depuis les matchs ---
-                    if objet_sport.sport_en_equipe:
+                    est_equipe = getattr(objet_sport, 'sport_en_equipe', False) or (type_sport.lower() in ["football", "basketball", "volleyball"])
+                    if est_equipe:
                         # Sport d'equipe (Foot, Basket) : recherche dans les compositions
                         matchs_joueur = [
                             m for m in objet_sport.matchs
@@ -264,8 +268,8 @@ def main():
                                     break
                                 else:
                                     print("Choix invalide.")
-                else:
-                    print("Joueur introuvable.")
+                elif not matches:
+                    pass # Déjà affiché plus haut
 
             elif choix_stat == "2":
                 nom_equipe = input("\nEntrez le nom de l'equipe (ou une partie du nom) : ").strip()
