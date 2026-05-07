@@ -47,6 +47,28 @@ TENNIS_ROUND_MAP = {
     "Aucun": "Aucun"
 }
 
+VOLLEY_STAGE_MAP = {
+    "Preliminary Round - Pool A": "Phase de poules - Groupe A",
+    "Preliminary Round - Pool B": "Phase de poules - Groupe B",
+    "Preliminary Round - Pool C": "Phase de poules - Groupe C",
+    "Quarter-finals": "Quarts de finale",
+    "Semi-finals": "Demi-finales",
+    "Bronze Medal Match": "Match pour la médaille de bronze",
+    "Gold Medal Match": "Finale",
+    "Classification 5-8": "Classement 5-8",
+    "Classification 7-8": "Classement 7-8",
+    "Classification 5-6": "Classement 5-6"
+}
+
+VOLLEY_FUNCTION_MAP = {
+    "Head Coach": "Entraîneur principal",
+    "Assistant Coach": "Entraîneur adjoint",
+    "2nd Assistant Coach": "Entraîneur adjoint",
+    "Team Manager": "Manager d'équipe",
+    "Physiotherapist": "Kinésithérapeute",
+    "Doctor": "Médecin"
+}
+
 def charger_configurations():
     config_file = "objets/config.p"
     default_config = {
@@ -202,6 +224,7 @@ def main():
             is_foot = type_sport.lower() == "football"
             is_basket = type_sport.lower() == "basketball"
             is_badminton = type_sport.lower() == "badminton"
+            is_volley = type_sport.lower() == "volleyball"
             print("\nQuel type de statistiques souhaitez-vous consulter ?")
             if is_tennis:
                 print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
@@ -224,6 +247,13 @@ def main():
                 print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
                 print("2. Historique des confrontations entre 2 joueurs")
                 print("3. Retour au menu principal")
+            elif is_volley:
+                print("\n--- MENU VOLLEYBALL (JO PARIS 2024) ---")
+                print("1. Résultats de la compétition (Tableaux)")
+                print("2. Statistiques par équipes")
+                print("3. Profils athlètes")
+                print("4. Encadrement technique")
+                print("5. Retour au menu principal")
             else:
                 print(f"1. Rechercher les statistiques d'un joueur precis (Ex: {ex_joueur})")
                 print(f"2. Rechercher les statistiques d'une equipe/club (Ex: {ex_equipe})")
@@ -238,8 +268,13 @@ def main():
             # Ajustement des choix pour le Football et le Tennis
             if is_tennis or is_badminton:
                 if choix_stat == "2": choix_stat = "3" # Redirige vers H2H
-                elif choix_stat == "3": choix_stat = "6" # Redirige vers Retour
-            
+                elif choix_stat == "3": choix_stat = "6" # Redirige vers Retour au menu principal
+            elif is_volley:
+                if choix_stat == "1": choix_stat = "VOLLEY_RESULTATS"
+                elif choix_stat == "2": choix_stat = "VOLLEY_EQUIPES"
+                elif choix_stat == "3": choix_stat = "VOLLEY_ATHLETES"
+                elif choix_stat == "4": choix_stat = "VOLLEY_COACHS"
+                elif choix_stat == "5": choix_stat = "6"
             if choix_stat == "1":
                 nom_joueur = input("\nEntrez le nom du joueur (ou une partie du nom) : ").strip()
                 matches = objet_sport.get_joueur_matches(nom_joueur)
@@ -1008,11 +1043,181 @@ def main():
                 print(">>> Affichage du graphique dans une nouvelle fenetre. Fermez-la pour continuer.")
                 plt.show()
 
-            elif choix_stat == "6":
-                if is_basket:
-                    print("Choix invalide.")
+            elif choix_stat.startswith("VOLLEY_"):
+                import pandas as pd
+                if not plt:
+                    print("\n[Erreur] matplotlib n'est pas installe.")
                     continue
-                pass
+
+                if choix_stat == "VOLLEY_RESULTATS":
+                    print("\n--- Résultats de la compétition (JO de Paris 2024) ---")
+                    print("1. Tableau Femmes")
+                    print("2. Tableau Hommes")
+                    genre = input("Votre choix : ")
+                    sexe = 'F' if genre == "1" else 'H'
+                    matches = [m for m in objet_sport.matchs if getattr(m, 'gender', '') == sexe]
+                    if not matches:
+                        print("Aucun match trouvé.")
+                        continue
+                    
+                    # Groupement par stage
+                    stages = {}
+                    for m in matches:
+                        st_raw = m.stage if m.stage else "Autre"
+                        st = VOLLEY_STAGE_MAP.get(st_raw, st_raw)
+                        if st not in stages: stages[st] = []
+                        stages[st].append(f"{m.equipe1_id} {m.score1}-{m.score2} {m.equipe2_id}")
+                    
+                    for st, results in stages.items():
+                        print(f"\n--- {st} ---")
+                        for r in results:
+                            print(f"  {r}")
+
+                elif choix_stat == "VOLLEY_EQUIPES":
+                    print("\n--- Statistiques par équipes ---")
+                    print("1. Femmes")
+                    print("2. Hommes")
+                    genre = input("Votre choix : ")
+                    sexe = 'F' if genre == "1" else 'H'
+                    
+                    # On recalcule les stats par sexe
+                    stats_equipes = {}
+                    for m in objet_sport.matchs:
+                        if getattr(m, 'gender', '') != sexe: continue
+                        for eq_id, s_g, s_p in [(m.equipe1_id, m.score1, m.score2), (m.equipe2_id, m.score2, m.score1)]:
+                            if eq_id not in stats_equipes:
+                                stats_equipes[eq_id] = {"g": 0, "p": 0, "v": 0, "d": 0, "scores": {}}
+                            stats_equipes[eq_id]["g"] += s_g
+                            stats_equipes[eq_id]["p"] += s_p
+                            if s_g > s_p: 
+                                stats_equipes[eq_id]["v"] += 1
+                                sc = f"{s_g}-{s_p}"
+                                stats_equipes[eq_id]["scores"][sc] = stats_equipes[eq_id]["scores"].get(sc, 0) + 1
+                            else: 
+                                stats_equipes[eq_id]["d"] += 1
+
+                    print("\n1. Classement par ratio de sets")
+                    print("2. Profil des victoires (Graphique)")
+                    print("3. Distribution des scores de matchs (Graphique)")
+                    sous_choix = input("Votre choix : ")
+
+                    if sous_choix == "1":
+                        ratios = []
+                        for eid, s in stats_equipes.items():
+                            ratio = s["g"] / max(1, s["p"])
+                            ratios.append((eid, ratio, s["g"], s["p"]))
+                        ratios.sort(key=lambda x: x[1], reverse=True)
+                        print(f"\n--- Classement Ratio de Sets ({'Femmes' if sexe=='F' else 'Hommes'}) ---")
+                        for i, (eid, r, g, p) in enumerate(ratios):
+                            print(f"{i+1}. {eid:10} : Ratio {r:.2f} ({g} gagnés / {p} perdus)")
+
+                    elif sous_choix == "2":
+                        # Profil des victoires (3-0, 3-1, 3-2) pour le top 5
+                        top_5 = sorted(stats_equipes.items(), key=lambda x: x[1]["v"], reverse=True)[:5]
+                        labels = ['3-0', '3-1', '3-2']
+                        plt.figure(figsize=(10,6))
+                        for eid, s in top_5:
+                            vals = [s["scores"].get('3-0', 0), s["scores"].get('3-1', 0), s["scores"].get('3-2', 0)]
+                            plt.plot(labels, vals, marker='o', label=eid)
+                        plt.title(f"Profil des victoires (3-0, 3-1, 3-2) - Top 5 {'Femmes' if sexe=='F' else 'Hommes'}")
+                        plt.ylabel("Nombre de victoires")
+                        plt.legend()
+                        plt.grid(True, alpha=0.3)
+                        plt.show()
+
+                    elif sous_choix == "3":
+                        dist = {'Matchs en 3 sets': 0, 'Matchs en 4 sets': 0, 'Matchs en 5 sets': 0}
+                        for m in objet_sport.matchs:
+                            if getattr(m, 'gender', '') == sexe:
+                                total_sets = m.score1 + m.score2
+                                if total_sets == 3: dist['Matchs en 3 sets'] += 1
+                                elif total_sets == 4: dist['Matchs en 4 sets'] += 1
+                                elif total_sets == 5: dist['Matchs en 5 sets'] += 1
+                        plt.figure(figsize=(8,8))
+                        plt.pie(dist.values(), labels=dist.keys(), autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired.colors)
+                        plt.title(f"Distribution de la durée des matchs {'Femmes' if sexe=='F' else 'Hommes'}")
+                        plt.show()
+
+                elif choix_stat == "VOLLEY_ATHLETES":
+                    print("\n--- Profils athlètes ---")
+                    print("1. Femmes")
+                    print("2. Hommes")
+                    genre = input("Votre choix : ")
+                    sexe = 'F' if genre == "1" else 'H'
+                    joueurs = [j for j in objet_sport.joueurs.values() if getattr(j, 'gender', '') == sexe]
+                    
+                    print("\n1. Taille moyenne par pays (Graphique)")
+                    print("2. Distribution des âges (Graphique)")
+                    sous_choix = input("Votre choix : ")
+
+                    if sous_choix == "1":
+                        pays_tailles = {}
+                        for j in joueurs:
+                            if j.height and j.country:
+                                if j.country not in pays_tailles: pays_tailles[j.country] = []
+                                pays_tailles[j.country].append(j.height)
+                        moyennes = {p: sum(t)/len(t) for p, t in pays_tailles.items()}
+                        sorted_moy = sorted(moyennes.items(), key=lambda x: x[1], reverse=True)
+                        names = [x[0] for x in sorted_moy]
+                        values = [x[1] for x in sorted_moy]
+                        plt.figure(figsize=(12,6))
+                        plt.bar(names, values, color='skyblue')
+                        plt.ylim(min(values)-5, max(values)+2)
+                        plt.title(f"Taille moyenne par pays ({'Femmes' if sexe=='F' else 'Hommes'})")
+                        plt.ylabel("Taille (cm)")
+                        plt.xticks(rotation=45)
+                        plt.show()
+
+                    elif sous_choix == "2":
+                        ages = []
+                        today = datetime.date.today()
+                        for j in joueurs:
+                            if j.birthdate:
+                                age = today.year - j.birthdate.year - ((today.month, today.day) < (j.birthdate.month, j.birthdate.day))
+                                ages.append(age)
+                        plt.figure(figsize=(10,6))
+                        plt.hist(ages, bins=range(min(ages), max(ages)+2), color='orange', edgecolor='black', alpha=0.7)
+                        plt.title(f"Distribution des âges ({'Femmes' if sexe=='F' else 'Hommes'})")
+                        plt.xlabel("Âge")
+                        plt.ylabel("Nombre d'athlètes")
+                        plt.grid(axis='y', alpha=0.3)
+                        plt.show()
+
+                elif choix_stat == "VOLLEY_COACHS":
+                    print("\n--- Encadrement technique ---")
+                    print("1. Femmes")
+                    print("2. Hommes")
+                    genre = input("Votre choix : ")
+                    filename = "volleyball_coach_women.csv" if genre == "1" else "volleyball_coach_men.csv"
+                    path = os.path.join(objet_sport.dossier, filename)
+                    if not os.path.exists(path):
+                        print("Fichier des coachs introuvable.")
+                        continue
+                    df = pd.read_csv(path)
+                    
+                    print("\n1. coach de chaque equipe")
+                    print("2. Structure des staffs techniques (Graphique)")
+                    sous_choix = input("Votre choix : ")
+
+                    if sous_choix == "1":
+                        head_coaches = df[df['function'] == 'Head Coach']
+                        print(f"\n--- Coach de chaque équipe ({'Femmes' if genre=='1' else 'Hommes'}) ---")
+                        for _, row in head_coaches.iterrows():
+                            print(f"  - Équipe : {row['country_code']:4} | Coach : {row['name']}")
+
+                    elif sous_choix == "2":
+                        # Traduction des fonctions dans le DataFrame pour le graphique
+                        df_plot = df.copy()
+                        df_plot['function'] = df_plot['function'].map(VOLLEY_FUNCTION_MAP).fillna(df_plot['function'])
+                        staff_counts = df_plot.groupby(['country_code', 'function']).size().unstack(fill_value=0)
+                        staff_counts.plot(kind='bar', stacked=True, figsize=(12,6), colormap='viridis')
+                        plt.title(f"Structure des staffs par équipe ({'Femmes' if genre=='1' else 'Hommes'})")
+                        plt.ylabel("Nombre de membres")
+                        plt.xlabel("Équipe")
+                        plt.legend(title="Fonction", bbox_to_anchor=(1.05, 1), loc='upper left')
+                        plt.tight_layout()
+                        plt.show()
+                continue
             else:
                 print("Choix invalide.")
         else:

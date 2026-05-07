@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from src.Model.Match import Match
+from src.Model.Match import Match, MatchVolley
 
 
 class VolleyMatchLoader():
@@ -53,14 +53,16 @@ class VolleyMatchLoader():
                     except (ValueError, IndexError):
                         saison = None
 
-                matchs.append(Match(
+                matchs.append(MatchVolley(
                     id=None,
                     equipe1_id=str(pays1).strip(),
                     equipe2_id=str(pays2).strip(),
                     score1=int(sets1),
                     score2=int(sets2),
                     date=date_brute,
-                    saison=saison
+                    saison=saison,
+                    gender='H',
+                    stage=ligne.get('stage')
                 ))
 
         # --- Matchs féminins ---
@@ -90,14 +92,16 @@ class VolleyMatchLoader():
                     except (ValueError, IndexError):
                         saison = None
 
-                matchs.append(Match(
+                matchs.append(MatchVolley(
                     id=None,
                     equipe1_id=str(pays1).strip(),
                     equipe2_id=str(pays2).strip(),
                     score1=int(sets1),
                     score2=int(sets2),
                     date=date_brute,
-                    saison=saison
+                    saison=saison,
+                    gender='F',
+                    stage=ligne.get('stage')
                 ))
 
         return matchs

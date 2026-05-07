@@ -64,3 +64,9 @@ class MatchBasketball(Match):
         super().__init__(*args, **kwargs)
         self.saison = saison
         self.season_type = season_type
+
+class MatchVolley(Match):
+    def __init__(self, *args, gender=None, stage=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.gender = gender # 'H' or 'F'
+        self.stage = stage
