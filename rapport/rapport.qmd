@@ -204,45 +204,45 @@ Les contributions au projet ont été réparties entre le développement des fon
 
 L'utilisateur peut dans un premier temps charger un ou plusieurs jeux de données depuis des fichiers CSV.
 
-![Interface de chargement des données](1.png){fig-align="center" fig-pos="H" width="85%"}
+![Interface de chargement des données](10.png){fig-align="center" fig-pos="H" width="85%"}
 
 Lors du chargement, les données sont lues avec Pandas, nettoyées puis converties en objets Python afin d'être manipulées plus facilement dans le reste de l'application. Une fois les données traitées, elles sont sauvegardées localement avec Pickle afin d'éviter de relire les fichiers CSV à chaque exécution du programme.
 
 Différentes statistiques sur les joueurs, équipes et matchs vont pouvoir être consultées. Déjà, plusieurs statistiques globales sont calculées automatiquement à partir des matchs chargés.
 
-![Exemple : Nom : Villarreal CF, Saison 2008/2009](2.png){fig-align="center" fig-pos="H" width="85%"}
+![Exemple : Nom : Villarreal CF, Saison 2008/2009](1.png){fig-align="center" fig-pos="H" width="85%"}
 
 Nous avons notamment implémenté le calcul du nombre de matchs joués, du taux de victoire, des confrontations directes entre deux joueurs ou équipes ainsi qu'un système de classement basé sur les résultats des rencontres.
 
-![Exemple : Historique Confrontation Rafael Nadal vs Novak Djokovic](3.png){fig-align="center" fig-pos="H" width="85%"}
+![Exemple : Historique Confrontation Rafael Nadal vs Novak Djokovic](2.png){fig-align="center" fig-pos="H" width="85%"}
 
 Ce classement attribue trois points pour une victoire et un point en cas de match nul. Il peut être affiché de manière globale ou filtré par saison.
 
-![Exemple : Classement FRANCE Ligue 1 --- Saison 2012/2013](4.png){fig-align="center" fig-pos="H" width="85%"}
+![Exemple : Classement FRANCE Ligue 1 --- Saison 2012/2013](3.png){fig-align="center" fig-pos="H" width="85%"}
 
 Certaines statistiques spécifiques ont également été ajoutées pour le tennis. À partir des données ATP et WTA, l'application calcule par exemple le nombre de tournois remportés par chaque joueur ainsi que leur meilleur résultat en Grand Chelem.
 
-![Exemple : Stan Wawrinka, Saison : 2024](5.png){fig-align="center" fig-pos="H" width="85%"}
+![Exemple : Stan Wawrinka, Saison : 2024](4.png){fig-align="center" fig-pos="H" width="85%"}
 
 Ces statistiques sont directement stockées dans les objets joueurs afin d'être facilement accessibles depuis l'interface.
 
 Nous avons également ajouté plusieurs filtres afin de rendre l'exploration des données plus flexible. Il est par exemple possible de filtrer certains classements par saison ou par sexe lorsque les données le permettent.
 
-![Exemple : Villarreal CF](6.png){fig-align="center" fig-pos="H" width="85%"}
+![Exemple : Villarreal CF](5.png){fig-align="center" fig-pos="H" width="85%"}
 
 Enfin, l'application propose une partie visualisation reposant sur la bibliothèque Matplotlib. L'utilisateur peut afficher l'évolution des points ou du classement d'un joueur ou d'une équipe au fil des saisons. Ces graphiques permettent d'obtenir une représentation plus claire des performances et facilitent l'analyse des résultats sur plusieurs années.
 
-![Exemple : Évolution nombre de points du Real Madrid CF](7.png){fig-align="center" fig-pos="H" width="85%"}
+![Exemple : Évolution nombre de points du Real Madrid CF](6.png){fig-align="center" fig-pos="H" width="85%"}
 
 L'ensemble de ces fonctionnalités repose sur une architecture modulaire, via l'utilisation d'une structure commune basée sur les classes `Player`, `Team`, `Match` et `Sport`.
 
 Nous avons également développé plusieurs modules spécifiques selon les sports. Pour le tennis, nous avons intégré des statistiques avancées comme les aces, les doubles fautes ou les pourcentages de premières balles.
 
-![Exemple : Novak Djokovic, Saison : 2024](8.png){fig-align="center" fig-pos="H" width="85%"}
+![Exemple : Novak Djokovic, Saison : 2024](7.png){fig-align="center" fig-pos="H" width="85%"}
 
 Pour le basketball, nous avons ajouté des statistiques collectives avancées comme le Net Rating ou le eFG%.
 
-![Exemple : Golden State Warriors, Saison 2022-2023](9.png){fig-align="center" fig-pos="H" width="85%"}
+![Exemple : Golden State Warriors, Saison 2022-2023](8.png){fig-align="center" fig-pos="H" width="85%"}
 
 | Statistique | Définition |
 |:--|:--|
@@ -259,7 +259,7 @@ Pour le basketball, nous avons ajouté des statistiques collectives avancées co
 
 Enfin, pour le volleyball des Jeux Olympiques 2024, nous avons développé des visualisations et des statistiques spécifiques sur les équipes nationales et les profils des joueurs.
 
-![Exemple : Distribution de la taille moyenne par pays (Hommes), JO 2024](10.png){fig-align="center" fig-pos="H" width="85%"}
+![Exemple : Distribution de la taille moyenne par pays (Hommes), JO 2024](9.png){fig-align="center" fig-pos="H" width="85%"}
 
 ## Difficultés rencontrées
 
