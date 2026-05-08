@@ -15,9 +15,8 @@ def afficher_graphique():
     chemin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "graphique_temp.png")
     plt.savefig(chemin, dpi=150, bbox_inches='tight')
     plt.close()
-    print("\n  Graphique sauvegardé.")
-    print(f"  → Ouvre 'graphique_temp.png' dans VS Code pour le visualiser.")
-    print("    (double-clic sur le fichier dans l'explorateur de fichiers VS Code)")
+    print(f"\n  Graphique sauvegardé ici : {chemin}")
+    print("  → Dans VS Code : panneau gauche > clique sur 'graphique_temp.png'")
 
 def sauvegarder_sport(sport: Sport, dossier_objets: str = "objets") -> None:
     os.makedirs(dossier_objets, exist_ok=True)
