@@ -197,7 +197,6 @@ def main():
             nom_sport = configurations[choix_sport][0]
             type_sport = configurations[choix_sport][1]
             
-            # Chargement de l'objet sport memoire
             objet_sport = charger_sport(nom_sport)
             if not objet_sport:
                 print(f"Les donnees de {nom_sport} n'ont pas encore ete chargees. Veuillez d'abord choisir l'option 1 du menu.")
@@ -219,7 +218,6 @@ def main():
                 else "Equipe Exemple"
             )
 
-            # Sous-menu pour les statistiques
             is_tennis = type_sport.lower() == "tennis"
             is_foot = type_sport.lower() == "football"
             is_basket = type_sport.lower() == "basketball"
@@ -264,11 +262,9 @@ def main():
             
             choix_stat = input("Votre choix : ")
             
-            # Ajustement des choix pour le Tennis
-            # Ajustement des choix pour le Football et le Tennis
             if is_tennis or is_badminton:
-                if choix_stat == "2": choix_stat = "3" # Redirige vers H2H
-                elif choix_stat == "3": choix_stat = "6" # Redirige vers Retour au menu principal
+                if choix_stat == "2": choix_stat = "3"
+                elif choix_stat == "3": choix_stat = "6"
             elif is_volley:
                 if choix_stat == "1": choix_stat = "VOLLEY_RESULTATS"
                 elif choix_stat == "2": choix_stat = "VOLLEY_EQUIPES"
@@ -309,17 +305,14 @@ def main():
                     if not is_foot:
                         print(f"Pays: {CODE_TO_COUNTRY.get(joueur.pays, joueur.pays)}")
 
-                    # --- Statistiques globales calculées depuis les matchs ---
                     est_equipe = getattr(objet_sport, 'sport_en_equipe', False) or (type_sport.lower() in ["football", "basketball", "volleyball"])
                     if est_equipe:
-                        # Sport d'equipe (Foot, Basket) : recherche dans les compositions
                         matchs_joueur = [
                             m for m in objet_sport.matchs
                             if (hasattr(m, 'joueurs_dom') and joueur.id in m.joueurs_dom) or 
                                (hasattr(m, 'joueurs_ext') and joueur.id in m.joueurs_ext)
                         ]
                     else:
-                        # Sport individuel (Tennis) : recherche directe par ID d'entite
                         matchs_joueur = [
                             m for m in objet_sport.matchs
                             if m.equipe1_id == joueur.id or m.equipe2_id == joueur.id
@@ -331,14 +324,10 @@ def main():
                         print("\n>>> Aucune statistique disponible pour ce joueur.")
                     else:
                         if total_matchs > 0:
-                            # Calcul des victoires
                             victoires = 0
                             for m in matchs_joueur:
                                 v_id = m.vainqueur_id()
                                 if v_id is not None:
-                                    # Pour le tennis, v_id == joueur.id
-                                    # Pour le foot/basket, v_id est l'ID de l'equipe gagnante. 
-                                    # On doit verifier si le joueur etait dans l'equipe gagnante.
                                     if objet_sport.sport_en_equipe:
                                         role = "dom" if joueur.id in getattr(m, 'joueurs_dom', []) else "ext"
                                         equipe_joueur_id = m.equipe1_id if role == "dom" else m.equipe2_id
@@ -357,7 +346,6 @@ def main():
                             if is_foot:
                                 print(f"\nButs marques par l'equipe (en sa presence) : {victoires}")
                             elif is_basket:
-                                # Plus de stats moyennes pour le basket (data manquante)
                                 pass
                             else:
                                 taux_victoire = (victoires / total_matchs * 100)
@@ -366,7 +354,6 @@ def main():
                             if is_tennis:
                                 def get_val(m, attr):
                                     v = getattr(m, attr, 0)
-                                    # Vérifie si c'est None ou NaN (NaN != NaN en Python)
                                     if v is None or v != v:
                                         return 0
                                     return v
@@ -400,7 +387,6 @@ def main():
                                 stats = joueur.statistiques[saison_cle]
                                 keys = list(stats.keys())
 
-                                # Sous-menu des statistiques
                                 while True:
                                     print(f"\n=== MENU DES STATISTIQUES ({joueur.nom_complet()} - {saison_cle}) ===")
                                     print("1. Afficher toutes les statistiques")
@@ -429,7 +415,7 @@ def main():
                                     except ValueError:
                                         print("Veuillez entrer un numero valide.")
                 elif not matches:
-                    pass # Déjà affiché plus haut
+                    pass
 
             elif choix_stat == "2":
                 nom_equipe = input("\nEntrez le nom de l'equipe (ou une partie du nom) : ").strip()
@@ -462,7 +448,6 @@ def main():
                         saison_choisie = input("Entrez la saison pour voir les statistiques (ex: 2008/2009) : ")
                         
                         saison_cle = saison_choisie
-                        # Convertir en int si possible au cas où la clé est numérique (ex: 2024 au Tennis)
                         try:
                             if int(saison_choisie) in equipe.statistiques:
                                 saison_cle = int(saison_choisie)
@@ -474,7 +459,6 @@ def main():
                             stats = equipe.statistiques[saison_cle]
                             
                             if is_foot:
-                                # On identifie la ligue de l'équipe pour cette saison
                                 ligue_id = None
                                 for m in objet_sport.matchs:
                                     if m.saison == saison_cle and (m.equipe1_id == equipe.id or m.equipe2_id == equipe.id):
@@ -483,7 +467,6 @@ def main():
                                 
                                 if ligue_id:
                                     classement = objet_sport.calculer_classement(saison_filtre=saison_cle)
-                                    # Filtrer par ligue
                                     equipes_ligue = set()
                                     for m in objet_sport.matchs:
                                         if m.saison == saison_cle and getattr(m, 'league_id', None) == ligue_id:
@@ -666,7 +649,7 @@ def main():
                         else:
                             east_ids = {1610612737, 1610612738, 1610612751, 1610612766, 1610612741, 1610612739, 1610612765, 1610612754, 1610612748, 1610612749, 1610612752, 1610612753, 1610612755, 1610612761, 1610612764}
                             
-                            series_data = {} # (team1, team2) -> {'wins': [w1, w2], 'type': 'Playoffs'/'Play-In', 'first_date': date}
+                            series_data = {} 
                             for m in playoff_matchs:
                                 teams = tuple(sorted([m.equipe1_id, m.equipe2_id]))
                                 if teams not in series_data:
@@ -675,7 +658,6 @@ def main():
                                 if winner == teams[0]: series_data[teams]['wins'][0] += 1
                                 elif winner == teams[1]: series_data[teams]['wins'][1] += 1
                             
-                            # Categorization
                             rounds = {
                                 "Play-In East": [], "Play-In West": [],
                                 "1er Tour East": [], "1er Tour West": [],
@@ -699,29 +681,22 @@ def main():
                                 elif not is_east and not is_west:
                                     rounds["Finales NBA"].append(score_str)
                                 else:
-                                    # Heuristique basée sur le nombre de victoires max pour déterminer le tour
-                                    # Ou simplement le nombre de matchs joués dans la série?
                                     conf = "East" if is_east else "West"
-                                    # On peut aussi regarder le nombre de séries déjà trouvées pour ce tour
                                     wins_max = max(w1, w2)
-                                    if wins_max <= 1: # Play-in possiblement marqué comme Playoffs
+                                    if wins_max <= 1: 
                                         rounds[f"Play-In {conf}"].append(score_str)
                                     else:
-                                        # On va trier par date pour répartir dans les tours
                                         pass
                             
-                            # Approche simplifiée par date pour les tours Playoffs
                             all_series = []
                             for (id1, id2), data in series_data.items():
                                 if data['type'] == 'Playoffs':
                                     all_series.append({'teams': (id1, id2), 'data': data})
                             all_series.sort(key=lambda x: x['data']['first_date'] if x['data']['first_date'] else "")
                             
-                            # On répartit : les 8 premières = 1er tour, les 4 suivantes = demis, 2 = finales conf, 1 = NBA finals
                             po_series = [s for s in all_series if (s['teams'][0] in east_ids and s['teams'][1] in east_ids) or (s['teams'][0] not in east_ids and s['teams'][1] not in east_ids)]
                             finals_series = [s for s in all_series if s not in po_series]
                             
-                            # Répartition par date
                             for i, s in enumerate(po_series):
                                 id1, id2 = s['teams']; w1, w2 = s['data']['wins']
                                 eq1, eq2 = objet_sport.equipes.get(id1), objet_sport.equipes.get(id2)
@@ -777,7 +752,6 @@ def main():
                             print(f"  - Meilleur Net Rating : {best_nr_team.nom} ({best_nr_team.statistiques.get(s, {}).get('Net Rating')})")
                             print(f"  - Meilleur AST/TOV : {best_at_team.nom} ({best_at_team.statistiques.get(s, {}).get('AST/TOV')})")
                             if plt:
-                                # Bar plot des 5 meilleures attaques
                                 top_att = sorted(bilans.keys(), key=lambda id_e: objet_sport.equipes.get(id_e).statistiques.get(s, {}).get('PPG', 0), reverse=True)[:5]
                                 noms_att = [get_nom(id_e) for id_e in top_att]
                                 ppg_att = [objet_sport.equipes.get(id_e).statistiques.get(s, {}).get('PPG', 0) for id_e in top_att]
@@ -816,7 +790,6 @@ def main():
                     print(f"--- VUE DETAILLEE : {pays_input.upper()} - SAISON {s} ---")
                     print(f"{'='*60}")
                     
-                    # Calcul des stats globales du championnat
                     matchs_saison = [m for m in objet_sport.matchs if m.saison == s and getattr(m, 'league_id', None) == target_league_id]
                     total_matchs_champ = len(matchs_saison)
                     total_buts_champ = sum(getattr(m, 'score1', 0) + getattr(m, 'score2', 0) for m in matchs_saison)
@@ -827,7 +800,6 @@ def main():
                         
                     moyenne_buts = total_buts_champ / total_matchs_champ
                     
-                    # Recuperation des stats par equipe pour le classement
                     classement_global = objet_sport.calculer_classement(saison_filtre=s)
                     equipes_ids = set()
                     for m in matchs_saison:
@@ -874,7 +846,6 @@ def main():
                 pays_input = input("\nEntrez le nom du pays/nationalite : ").strip()
                 choix_nation = None
                 
-                # Distinction par sexe si disponible
                 sexe_disponibles = set(j.sexe for j in objet_sport.joueurs.values() if j.sexe)
                 filtre_sexe = None
                 if len(sexe_disponibles) > 1:
@@ -928,10 +899,8 @@ def main():
 
             elif choix_stat == "5":
                 if is_basket:
-                    # Retour au menu principal
                     continue
                 if is_foot:
-                    # On demande directement l'evolution
                     pass 
                 
                 if not plt:
@@ -959,7 +928,6 @@ def main():
                     print("Entite introuvable.")
                     continue
                 
-                # On collecte toutes les saisons disponibles dans les matchs
                 saisons_disponibles = set()
                 for m in objet_sport.matchs:
                     if m.saison is not None:
@@ -983,8 +951,6 @@ def main():
                 for s in saisons_disponibles:
                     classement_saison = objet_sport.calculer_classement(saison_filtre=s)
                     
-                    # Pour le football, les matchs ont un attribut league_id
-                    # On identifie la ligue de l'équipe pour ne comparer que dans son championnat
                     if not is_joueur and type_sport.lower() == "football":
                         ligue_de_lequipe = None
                         for m in objet_sport.matchs:
@@ -1007,13 +973,11 @@ def main():
                     
                     
                     if afficher_classement:
-                        # Trouver le rang
                         rang = next((i + 1 for i, (id_ent, _) in enumerate(classement_saison) if id_ent == entite.id), None)
                         if rang is not None:
                             saisons_plot.append(str(s))
                             valeurs_par_saison.append(rang)
                     else:
-                        # Trouver les points
                         pts = next((points for id_ent, points in classement_saison if id_ent == entite.id), 0)
                         if pts > 0:
                             saisons_plot.append(str(s))
@@ -1029,7 +993,7 @@ def main():
                 if afficher_classement:
                     plt.title(f"Evolution du classement - {nom_affiche}", fontsize=14)
                     plt.ylabel("Position au classement", fontsize=12)
-                    plt.gca().invert_yaxis()  # La 1ere place en haut !
+                    plt.gca().invert_yaxis()
                     from matplotlib.ticker import MaxNLocator
                     plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
                 else:
@@ -1060,7 +1024,6 @@ def main():
                         print("Aucun match trouvé.")
                         continue
                     
-                    # Groupement par stage
                     stages = {}
                     for m in matches:
                         st_raw = m.stage if m.stage else "Autre"
@@ -1080,7 +1043,6 @@ def main():
                     genre = input("Votre choix : ")
                     sexe = 'F' if genre == "1" else 'H'
                     
-                    # On recalcule les stats par sexe
                     stats_equipes = {}
                     for m in objet_sport.matchs:
                         if getattr(m, 'gender', '') != sexe: continue
@@ -1112,7 +1074,6 @@ def main():
                             print(f"{i+1}. {eid:10} : Ratio {r:.2f} ({g} gagnés / {p} perdus)")
 
                     elif sous_choix == "2":
-                        # Profil des victoires (3-0, 3-1, 3-2) pour le top 5
                         top_5 = sorted(stats_equipes.items(), key=lambda x: x[1]["v"], reverse=True)[:5]
                         labels = ['3-0', '3-1', '3-2']
                         plt.figure(figsize=(10,6))
@@ -1206,7 +1167,6 @@ def main():
                             print(f"  - Équipe : {row['country_code']:4} | Coach : {row['name']}")
 
                     elif sous_choix == "2":
-                        # Traduction des fonctions dans le DataFrame pour le graphique
                         df_plot = df.copy()
                         df_plot['function'] = df_plot['function'].map(VOLLEY_FUNCTION_MAP).fillna(df_plot['function'])
                         staff_counts = df_plot.groupby(['country_code', 'function']).size().unstack(fill_value=0)

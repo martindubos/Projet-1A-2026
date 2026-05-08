@@ -7,12 +7,12 @@ class Match:
         self.score1     = score1
         self.score2     = score2
         self.date       = date
-        self.saison     = saison  # Annee ou saison du match (ex: 2024 ou "2015/2016")
+        self.saison     = saison 
 
     def vainqueur_id(self):
         if self.score1 > self.score2: return self.equipe1_id
         if self.score2 > self.score1: return self.equipe2_id
-        return None  # match nul
+        return None
 
 class MatchTennis(Match):
     def __init__(self, *args, surface=None, round=None,
@@ -24,12 +24,12 @@ class MatchTennis(Match):
                  l_1stWon=None, l_2ndWon=None, l_SvGms=None,
                  l_bpSaved=None, l_bpFaced=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.surface = surface   # Hard / Clay / Grass
-        self.round   = round     # F, SF, QF, R16...
+        self.surface = surface   
+        self.round   = round    
         self.tournoi = tournoi
-        self.circuit = circuit   # ATP ou WTA
+        self.circuit = circuit   
         self.saison  = saison
-        # Stats du vainqueur
+        
         self.w_ace = w_ace
         self.w_df = w_df
         self.w_svpt = w_svpt
@@ -39,7 +39,7 @@ class MatchTennis(Match):
         self.w_SvGms = w_SvGms
         self.w_bpSaved = w_bpSaved
         self.w_bpFaced = w_bpFaced
-        # Stats du perdant
+        
         self.l_ace = l_ace
         self.l_df = l_df
         self.l_svpt = l_svpt
@@ -68,5 +68,5 @@ class MatchBasketball(Match):
 class MatchVolley(Match):
     def __init__(self, *args, gender=None, stage=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.gender = gender # 'H' or 'F'
+        self.gender = gender
         self.stage = stage

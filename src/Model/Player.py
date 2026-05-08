@@ -24,7 +24,7 @@ class Player:
         self.weight = weight
         self.position = position
         self.gender = gender
-        self.statistiques = {}  # { annee: {cle: valeur} }
+        self.statistiques = {}  
 
     def ajouter_statistiques(self, annee: int, stats: dict) -> None:
         self.statistiques[annee] = stats

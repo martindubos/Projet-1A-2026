@@ -8,9 +8,9 @@ class Sport:
         self.type_sport = type_sport if type_sport else nom
         self.dossier = dossier
         self.sport_en_equipe = sport_en_equipe
-        self.equipes = {}   # id -> Team
-        self.joueurs = {}   # id -> Player
-        self.matchs = []    # list of Match
+        self.equipes = {}
+        self.joueurs = {}
+        self.matchs = []
         self.classement = []
         
         if self.dossier:
@@ -44,14 +44,11 @@ class Sport:
         points_par_entite = {}
 
         for match in self.matchs:
-            # Filtrage par saison si demandé
             if saison_filtre is not None:
-                # Tous les types de matchs (Tennis, Football, Basketball) ont un attribut .saison
                 saison_du_match = match.saison
                 if saison_du_match is None or str(saison_du_match) != str(saison_filtre):
                     continue
 
-            # Initialisation des points à 0 si le joueur/équipe n'est pas encore dans le dict
             if match.equipe1_id not in points_par_entite:
                 points_par_entite[match.equipe1_id] = 0
             if match.equipe2_id not in points_par_entite:
@@ -60,14 +57,11 @@ class Sport:
             id_vainqueur = match.vainqueur_id()
 
             if id_vainqueur is not None:
-                # Victoire : +3 points au vainqueur
                 points_par_entite[id_vainqueur] += 3
             else:
-                # Match nul : +1 point pour chacun
                 points_par_entite[match.equipe1_id] += 1
                 points_par_entite[match.equipe2_id] += 1
 
-        # Tri par ordre décroissant de points
         classement = sorted(points_par_entite.items(), key=lambda x: x[1], reverse=True)
         return classement
 
