@@ -767,7 +767,7 @@ def main():
                                 for i, v in enumerate(ppg_att):
                                     plt.text(i, v + 0.5, f"{v:.1f}", ha='center', fontweight='bold')
                                 plt.tight_layout()
-                                plt.show()
+                                plt.show(block=True)
                     continue
 
                 elif is_foot:
@@ -1007,7 +1007,7 @@ def main():
                 plt.xticks(rotation=45)
                 plt.tight_layout()
                 print(">>> Affichage du graphique dans une nouvelle fenetre. Fermez-la pour continuer.")
-                plt.show()
+                plt.show(block=True)
 
             elif choix_stat.startswith("VOLLEY_"):
                 import pandas as pd
@@ -1086,7 +1086,7 @@ def main():
                         plt.ylabel("Nombre de victoires")
                         plt.legend()
                         plt.grid(True, alpha=0.3)
-                        plt.show()
+                        plt.show(block=True)
 
                     elif sous_choix == "3":
                         dist = {'Matchs en 3 sets': 0, 'Matchs en 4 sets': 0, 'Matchs en 5 sets': 0}
@@ -1099,7 +1099,7 @@ def main():
                         plt.figure(figsize=(8,8))
                         plt.pie(dist.values(), labels=dist.keys(), autopct='%1.1f%%', startangle=140, colors=plt.cm.Paired.colors)
                         plt.title(f"Distribution de la durée des matchs {'Femmes' if sexe=='F' else 'Hommes'}")
-                        plt.show()
+                        plt.show(block=True)
 
                 elif choix_stat == "VOLLEY_ATHLETES":
                     print("\n--- Profils athlètes ---")
@@ -1129,7 +1129,7 @@ def main():
                         plt.title(f"Taille moyenne par pays ({'Femmes' if sexe=='F' else 'Hommes'})")
                         plt.ylabel("Taille (cm)")
                         plt.xticks(rotation=45)
-                        plt.show()
+                        plt.show(block=True)
 
                     elif sous_choix == "2":
                         ages = []
@@ -1144,7 +1144,7 @@ def main():
                         plt.xlabel("Âge")
                         plt.ylabel("Nombre d'athlètes")
                         plt.grid(axis='y', alpha=0.3)
-                        plt.show()
+                        plt.show(block=True)
 
                 elif choix_stat == "VOLLEY_COACHS":
                     print("\n--- Encadrement technique ---")
@@ -1178,7 +1178,7 @@ def main():
                         plt.xlabel("Équipe")
                         plt.legend(title="Fonction", bbox_to_anchor=(1.05, 1), loc='upper left')
                         plt.tight_layout()
-                        plt.show()
+                        plt.show(block=True)
                 continue
             else:
                 print("Choix invalide.")
