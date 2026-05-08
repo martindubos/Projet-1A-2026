@@ -26,10 +26,23 @@ def sauvegarder_sport(sport: Sport, dossier_objets: str = "objets") -> None:
 
 def charger_sport(nom: str, dossier_objets: str = "objets") -> Sport:
     chemin = os.path.join(dossier_objets, f"{nom.lower()}.p")
-    if os.path.exists(chemin):
+    if not os.path.exists(chemin):
+        return None
+    try:
         with open(chemin, "rb") as f:
-            return pickle.load(f)
-    return None
+            sport = pickle.load(f)
+        # Vérification que les objets chargés sont complets
+        for m in sport.matchs[:5]:
+            if hasattr(m, 'circuit') and not hasattr(m, 'w_ace'):
+                raise AttributeError("MatchTennis incomplet")
+        return sport
+    except Exception as e:
+        print(f"  [Info] Cache obsolète pour {nom}, rechargement depuis les CSV...")
+        try:
+            os.remove(chemin)
+        except Exception:
+            pass
+        return None
 
 CODE_TO_COUNTRY = {
     "FRA": "France", "ESP": "Espagne", "ITA": "Italie", "SUI": "Suisse",
