@@ -3,6 +3,8 @@ import os
 import pickle
 from src.Model.Sports import Sport
 
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 try:
     import matplotlib.pyplot as plt
 except ImportError:
