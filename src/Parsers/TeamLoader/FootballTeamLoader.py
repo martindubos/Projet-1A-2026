@@ -34,7 +34,6 @@ class FootballTeamLoader():
 
         tableau_equipes = pd.read_csv(fichier_equipes)
 
-        # Construction du dictionnaire des équipes
         equipes = {}
         for ligne in tableau_equipes.to_dict("records"):
             id_equipe = ligne.get("team_api_id")
@@ -44,7 +43,6 @@ class FootballTeamLoader():
                 nom_court=ligne.get("team_short_name", "")
             )
 
-        # Mapping des noms de pays
         fichier_pays = os.path.join(dossier, "country.csv")
         noms_pays = {}
         if os.path.exists(fichier_pays):
@@ -52,7 +50,6 @@ class FootballTeamLoader():
             for _, r in df_pays.iterrows():
                 noms_pays[r['id']] = r['name']
 
-        # Attribution du pays aux équipes via match.csv
         if os.path.exists(fichier_matchs):
             df_matchs = pd.read_csv(fichier_matchs, usecols=['home_team_api_id', 'country_id'])
             mapping_team_country = df_matchs.drop_duplicates('home_team_api_id').set_index('home_team_api_id')['country_id'].to_dict()
@@ -61,7 +58,6 @@ class FootballTeamLoader():
                 if c_id in noms_pays:
                     eq.pays_id = noms_pays[c_id]
 
-        # Calcul des statistiques à partir des matchs
         if not os.path.exists(fichier_matchs):
             return equipes
 
@@ -69,8 +65,6 @@ class FootballTeamLoader():
         tableau_matchs = pd.read_csv(fichier_matchs)
         liste_matchs = tableau_matchs.to_dict("records")
 
-        # On construit un dictionnaire :
-        # stats_par_equipe = { saison: { id_equipe: { "victoires": ..., ...} } }
         stats_par_equipe = {}
 
         for match in liste_matchs:
@@ -78,14 +72,12 @@ class FootballTeamLoader():
             id_domicile = match.get("home_team_api_id")
             id_exterieur = match.get("away_team_api_id")
 
-            # On ignore les matchs avec des données manquantes
             if saison is None or id_domicile is None or id_exterieur is None:
                 continue
 
             buts_domicile = match.get("home_team_goal", 0) or 0
             buts_exterieur = match.get("away_team_goal", 0) or 0
 
-            # Initialisation des statistiques pour la saison si besoin
             if saison not in stats_par_equipe:
                 stats_par_equipe[saison] = {}
 
@@ -120,7 +112,6 @@ class FootballTeamLoader():
                 stats_dom["nuls"] += 1
                 stats_ext["nuls"] += 1
 
-        # Calcul des points et injection dans les objets Team
         for saison, equipes_de_la_saison in stats_par_equipe.items():
             for id_equipe, stats in equipes_de_la_saison.items():
                 if id_equipe in equipes:

@@ -47,7 +47,6 @@ class BasketTeamLoader():
             for s in saisons:
                 df_s = df[df["season"] == s]
                 
-                # Aggregation stats domicile
                 home_agg = df_s.groupby("team_id_home").agg({
                     "pts_home": "sum", "pts_away": "sum",
                     "fga_home": "sum", "fgm_home": "sum", "fg3m_home": "sum",
@@ -60,7 +59,6 @@ class BasketTeamLoader():
                     "tov_home": "tov", "ast_home": "ast", "min": "min", "game_id": "games"
                 })
                 
-                # Aggregation stats extérieur
                 away_agg = df_s.groupby("team_id_away").agg({
                     "pts_away": "sum", "pts_home": "sum",
                     "fga_away": "sum", "fgm_away": "sum", "fg3m_away": "sum",
@@ -75,7 +73,6 @@ class BasketTeamLoader():
                 
                 all_stats = home_agg.add(away_agg, fill_value=0)
                 
-                # Victoires
                 home_wins = df_s[df_s["pts_home"] > df_s["pts_away"]]["team_id_home"].value_counts()
                 away_wins = df_s[df_s["pts_away"] > df_s["pts_home"]]["team_id_away"].value_counts()
                 total_wins = home_wins.add(away_wins, fill_value=0)
@@ -91,7 +88,6 @@ class BasketTeamLoader():
                     games = row["games"]
                     wins = total_wins.get(team_id, 0)
                     
-                    # Formules
                     poss = 0.96 * (fga + tov + 0.44 * fta - oreb)
                     off_rtg = 100 * (pts / poss) if poss > 0 else 0
                     def_rtg = 100 * (pts_allow / poss) if poss > 0 else 0

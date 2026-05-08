@@ -33,21 +33,18 @@ class FootballMatchLoader():
         matchs = []
         for ligne in tableau_matchs.to_dict("records"):
 
-            # Récupération des IDs des joueurs à domicile (home_player_1 à home_player_11)
             joueurs_domicile = []
             for numero in range(1, 12):
                 id_joueur = ligne.get(f"home_player_{numero}")
                 if id_joueur is not None and pd.notna(id_joueur):
                     joueurs_domicile.append(int(id_joueur))
 
-            # Récupération des IDs des joueurs à l'extérieur (away_player_1 à away_player_11)
             joueurs_exterieur = []
             for numero in range(1, 12):
                 id_joueur = ligne.get(f"away_player_{numero}")
                 if id_joueur is not None and pd.notna(id_joueur):
                     joueurs_exterieur.append(int(id_joueur))
 
-            # Récupération des buts (on met 0 si la valeur est absente)
             buts_domicile = ligne.get("home_team_goal")
             buts_exterieur = ligne.get("away_team_goal")
             buts_domicile = int(buts_domicile) if buts_domicile is not None and pd.notna(buts_domicile) else 0

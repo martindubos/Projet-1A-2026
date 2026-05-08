@@ -32,7 +32,6 @@ class VolleyTeamLoader():
 
         tableau_pays = pd.read_csv(fichier_pays)
 
-        # Construction du dictionnaire des équipes nationales
         equipes = {}
         for ligne in tableau_pays.to_dict("records"):
             code = ligne.get("code", "")
@@ -46,11 +45,8 @@ class VolleyTeamLoader():
                 pays_id=str(code)
             )
 
-        # Calcul des statistiques depuis les fichiers de matchs
-        # On construit: stats_par_saison = { saison: { id_equipe: { ... } } }
         stats_par_saison = {}
 
-        # Fichiers à traiter : hommes (colonnes country_code_1/2) et femmes (colonnes country_1/2)
         fichiers_a_traiter = [
             (os.path.join(dossier, "volleyball_match_men.csv"),   "country_code_1", "country_code_2"),
             (os.path.join(dossier, "volleyball_match_women.csv"), "country_1",      "country_2"),
@@ -76,7 +72,6 @@ class VolleyTeamLoader():
                 sets1 = ligne.get("set_country_1", 0) or 0
                 sets2 = ligne.get("set_country_2", 0) or 0
 
-                # Extraction de la saison (année)
                 saison = None
                 date_brute = ligne.get("date")
                 if date_brute is not None and not isinstance(date_brute, float):
@@ -88,7 +83,6 @@ class VolleyTeamLoader():
                 if saison not in stats_par_saison:
                     stats_par_saison[saison] = {}
 
-                # Initialisation des stats pour chaque équipe si besoin
                 for id_eq in [id_eq1, id_eq2]:
                     if id_eq not in stats_par_saison[saison]:
                         stats_par_saison[saison][id_eq] = {
@@ -116,7 +110,6 @@ class VolleyTeamLoader():
                     st2["Victoires"] += 1
                     st1["Defaites"] += 1
 
-        # Injection des statistiques dans les objets Team
         for saison, equipes_de_la_saison in stats_par_saison.items():
             for id_eq, stats in equipes_de_la_saison.items():
                 if id_eq in equipes:

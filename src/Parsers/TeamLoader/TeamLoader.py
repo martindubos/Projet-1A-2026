@@ -28,7 +28,7 @@ class TeamLoader():
         if sport_name == "Football":
             return FootballTeamLoader.load_all_team(dossier)
         elif sport_name == "Tennis":
-            return {}  # Le tennis n'a pas vraiment d'equipes dans ce dataset
+            return {}  
         elif sport_name == "Basketball":
             return BasketTeamLoader.load_all_team(dossier)
         elif sport_name == "Badminton":

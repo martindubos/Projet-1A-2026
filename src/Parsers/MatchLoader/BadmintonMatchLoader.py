@@ -40,19 +40,15 @@ class BadmintonMatchLoader():
             joueur2 = ligne.get("player_2")
             vainqueur = ligne.get("winner")
 
-            # On ignore les lignes avec des données essentielles manquantes
             if joueur1 is None or joueur2 is None or vainqueur is None:
                 continue
             if isinstance(joueur1, float) or isinstance(joueur2, float):
                 continue
 
-            # Le score encode le résultat : 1 pour le vainqueur, 0 pour le perdant
             if str(vainqueur).strip() == str(joueur1).strip():
                 score1, score2 = 1, 0
             else:
                 score1, score2 = 0, 1
-
-            # Extraction de l'année depuis la date (format 'YYYY-MM-DD')
             saison = None
             date_brute = ligne.get("date")
             if date_brute is not None and not isinstance(date_brute, float):

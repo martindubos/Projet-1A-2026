@@ -35,8 +35,6 @@ class TennisMatchLoader():
             tableau_matchs = pd.read_csv(fichier_matchs)
 
             for ligne in tableau_matchs.to_dict("records"):
-                # La date du tournoi est au format YYYYMMDD (ex: 20240101)
-                # On extrait les 4 premiers caractères pour obtenir l'année
                 date_tournoi = ligne.get("tourney_date")
                 if date_tournoi is not None and pd.notna(date_tournoi):
                     annee = int(str(date_tournoi)[:4])
@@ -45,10 +43,8 @@ class TennisMatchLoader():
 
                 matchs.append(MatchTennis(
                     id=ligne.get("match_num"),
-                    # En tennis, chaque joueur est directement l'entité (pas une équipe)
                     equipe1_id=ligne.get("winner_id"),
                     equipe2_id=ligne.get("loser_id"),
-                    # score1=1 car le gagnant a forcément gagné le match
                     score1=1,
                     score2=0,
                     surface=ligne.get("surface"),

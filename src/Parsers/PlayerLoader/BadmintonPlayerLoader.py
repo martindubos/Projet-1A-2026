@@ -40,8 +40,6 @@ class BadmintonPlayerLoader():
             if pays is None or (isinstance(pays, float)):
                 pays = ""
 
-            # Le nom complet est stocké dans lastname, firstname laissé vide
-            # pour que nom_complet() retourne le nom tel quel
             joueurs[nom] = Player(
                 id=nom,
                 lastname=nom,
@@ -51,17 +49,13 @@ class BadmintonPlayerLoader():
                 height=None
             )
 
-        # Calcul des statistiques à partir des matchs
         fichier_matchs = os.path.join(dossier, "match.csv")
         if os.path.exists(fichier_matchs):
             print("Calcul des statistiques des joueurs de badminton...")
             df_matchs = pd.read_csv(fichier_matchs)
             
-            # stats = { saison: { player_name: { ... } } }
             stats_par_joueur = {}
             
-            # Pour le calcul du plus haut stade atteint
-            # tournoi_stats = { player_name: { tournament: (highest_round_code, won_last_match) } }
             round_priority = {
                 "Final": 7, "Semi final": 6, "Quarter final": 5,
                 "Round of 16": 4, "Round of 32": 3,
@@ -92,12 +86,11 @@ class BadmintonPlayerLoader():
                             "Matchs joues": 0, "Victoires": 0, "Defaites": 0,
                             "Sets gagnes": 0, "Sets perdus": 0,
                             "Points marques": 0, "Points encaisses": 0,
-                            "Tournois": {}, # tournament -> highest_round_info
+                            "Tournois": {}, 
                         }
                     st = stats_par_joueur[saison][p]
                     st["Matchs joues"] += 1
                     
-                    # Suivi du plus haut stade par tournoi
                     curr_prio = round_priority.get(round_name, -1)
                     if tournament not in st["Tournois"]:
                         st["Tournois"][tournament] = (round_name, p == winner)
@@ -112,7 +105,6 @@ class BadmintonPlayerLoader():
                     else:
                         st["Defaites"] += 1
                         
-                    # Calcul des scores des games
                     for g in ['game_1_score', 'game_2_score', 'game_3_score']:
                         score_raw = row.get(g)
                         if pd.isna(score_raw) or score_raw == "": continue
@@ -131,7 +123,6 @@ class BadmintonPlayerLoader():
                     if p_name in joueurs:
                         win_rate = (st["Victoires"] / st["Matchs joues"] * 100) if st["Matchs joues"] > 0 else 0
                         
-                        # Conversion des résultats de tournois en codes lisibles par le menu
                         resultats_compet = {}
                         for t, (r_name, won) in st["Tournois"].items():
                             if r_name == "Final" and won:

@@ -20,19 +20,15 @@ class BasketPlayerLoader():
         joueurs = {}
         for ligne in tableau_joueurs.to_dict("records"):
 
-            # Conversion de la date de naissance
             date_naissance = None
             date_brute = ligne.get("birthdate")
             if date_brute is not None and pd.notna(date_brute):
                 try:
-                    # La date est au format "1990-05-22 00:00:00", on ne garde que la date
                     date_str = str(date_brute).split(" ")[0]
                     date_naissance = datetime.datetime.strptime(date_str, "%Y-%m-%d").date()
                 except ValueError:
                     date_naissance = None
 
-            # Conversion de la taille : format américain "pieds-pouces" -> centimètres
-            # Exemple : "6-5" signifie 6 pieds et 5 pouces
             taille_cm = None
             taille_brute = str(ligne.get("height", ""))
             if "-" in taille_brute:

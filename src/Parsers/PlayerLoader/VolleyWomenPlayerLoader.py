@@ -37,7 +37,6 @@ class VolleyWomenPlayerLoader():
             if not nom or (isinstance(nom, float)):
                 continue
 
-            # Conversion de la date de naissance au format 'YYYY-MM-DD'
             date_naissance = None
             date_brute = ligne.get("birth_date")
             if date_brute is not None and not isinstance(date_brute, float):
@@ -48,7 +47,6 @@ class VolleyWomenPlayerLoader():
                 except ValueError:
                     date_naissance = None
 
-            # La taille est directement en centimètres (entier)
             taille_brute = ligne.get("height")
             if taille_brute is not None and pd.notna(taille_brute):
                 try:

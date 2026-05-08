@@ -31,7 +31,6 @@ class PlayerLoader():
         if sport_name == "Football":
             return FootballPlayerLoader.load_all_player(dossier)
         elif sport_name == "Tennis":
-            # On combine ATP et WTA pour le Tennis
             players = {}
             players.update(TennisMenPlayerLoader.load_all_player(dossier))
             players.update(TennisWomenPlayerLoader.load_all_player(dossier))

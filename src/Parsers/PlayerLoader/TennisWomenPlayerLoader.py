@@ -13,7 +13,7 @@ class TennisWomenPlayerLoader:
         Une joueuse gagne un tournoi si elle remporte la finale (round == "F").
         On utilise un ensemble (set) pour ne compter qu'une fois chaque tournoi.
         """
-        tournois_gagnes_par_joueuse = {}  # { id_joueuse: set(id_tournoi) }
+        tournois_gagnes_par_joueuse = {}  
 
         for match in liste_matchs:
             if match.get("round") != "F":
@@ -30,7 +30,6 @@ class TennisWomenPlayerLoader:
 
             tournois_gagnes_par_joueuse[id_gagnante].add(id_tournoi)
 
-        # Conversion en nombre de tournois
         resultat = {}
         for id_joueuse, set_tournois in tournois_gagnes_par_joueuse.items():
             resultat[id_joueuse] = len(set_tournois)
@@ -43,15 +42,12 @@ class TennisWomenPlayerLoader:
         Trouve le meilleur résultat de chaque joueuse pour CHAQUE tournoi.
         On attribue un score numérique à chaque tour pour pouvoir comparer.
         """
-        # Plus le score est élevé, plus le tour est avancé
         poids_par_tour = {
             "R128": 1, "R64": 2, "R32": 3, "R16": 4,
             "QF": 5, "SF": 6, "F": 7
         }
-        # Pour retrouver le nom du tour à partir de son score
         tour_par_poids = {poids: tour for tour, poids in poids_par_tour.items()}
 
-        # resultats_par_joueuse[id_joueuse][tourney_name] = meilleur_score
         resultats_par_joueuse = {}
 
         for match in liste_matchs:
@@ -65,20 +61,17 @@ class TennisWomenPlayerLoader:
 
             score_actuel = poids_par_tour[tour_actuel]
 
-            # Mise à jour du meilleur résultat de la perdante dans ce tournoi
             if id_perdante is not None:
                 if id_perdante not in resultats_par_joueuse:
                     resultats_par_joueuse[id_perdante] = {}
                 if tournoi not in resultats_par_joueuse[id_perdante] or score_actuel > resultats_par_joueuse[id_perdante][tournoi]:
                     resultats_par_joueuse[id_perdante][tournoi] = score_actuel
 
-            # Si c'est une finale, la gagnante a gagné le tournoi
             if tour_actuel == "F" and id_gagnante is not None:
                 if id_gagnante not in resultats_par_joueuse:
                     resultats_par_joueuse[id_gagnante] = {}
-                resultats_par_joueuse[id_gagnante][tournoi] = 8 # Score pour "W" (Winner)
+                resultats_par_joueuse[id_gagnante][tournoi] = 8
 
-        # Construction du dictionnaire final avec les noms des tours
         tour_par_poids[8] = "W"
         final_result = {}
         for id_joueuse, stats_tournois in resultats_par_joueuse.items():
@@ -103,7 +96,6 @@ class TennisWomenPlayerLoader:
 
         liste_matchs = tableau_matchs.to_dict("records")
 
-        # Calcul des statistiques
         nb_tournois_gagnes = TennisWomenPlayerLoader.calculer_nombre_tournois_gagnes(liste_matchs)
         resultats_competitions = TennisWomenPlayerLoader.calculer_resultats_competitions(liste_matchs)
 
@@ -112,7 +104,6 @@ class TennisWomenPlayerLoader:
         joueuses = {}
 
         for ligne in tableau_joueuses.to_dict("records"):
-            # Date de naissance (stockée comme float ex: 19950812.0)
             date_naissance = None
             dob_brut = ligne.get("dob")
             if dob_brut is not None and not pd.isna(dob_brut):
@@ -122,7 +113,6 @@ class TennisWomenPlayerLoader:
                 except (ValueError, OverflowError):
                     date_naissance = None
 
-            # Taille (peut être absente)
             taille_brute = ligne.get("height")
             taille = int(taille_brute) if taille_brute is not None and not pd.isna(taille_brute) else None
 
@@ -139,7 +129,7 @@ class TennisWomenPlayerLoader:
                 gender="F"
             )
 
-        # Ajout des statistiques calculées
+
         for id_joueuse, joueuse in joueuses.items():
             stats_joueuse = {}
 

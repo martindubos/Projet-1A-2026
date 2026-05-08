@@ -27,8 +27,6 @@ class VolleyMatchLoader():
         """
         matchs = []
 
-        # --- Matchs masculins ---
-        # Les codes pays sont dans les colonnes 'country_code_1' et 'country_code_2'
         fichier_hommes = os.path.join(dossier, "volleyball_match_men.csv")
         if os.path.exists(fichier_hommes):
             tableau = pd.read_csv(fichier_hommes)
@@ -44,7 +42,6 @@ class VolleyMatchLoader():
                 sets1 = ligne.get("set_country_1", 0) or 0
                 sets2 = ligne.get("set_country_2", 0) or 0
 
-                # Extraction de l'année depuis la date 'YYYY-MM-DD'
                 saison = None
                 date_brute = ligne.get("date")
                 if date_brute is not None and not isinstance(date_brute, float):
@@ -65,9 +62,6 @@ class VolleyMatchLoader():
                     stage=ligne.get('stage')
                 ))
 
-        # --- Matchs féminins ---
-        # Les codes pays sont dans les colonnes 'country_1' et 'country_2'
-        # (noms complets comme 'Brazil', 'France' — pas de code à 3 lettres)
         fichier_femmes = os.path.join(dossier, "volleyball_match_women.csv")
         if os.path.exists(fichier_femmes):
             tableau = pd.read_csv(fichier_femmes)
@@ -83,7 +77,6 @@ class VolleyMatchLoader():
                 sets1 = ligne.get("set_country_1", 0) or 0
                 sets2 = ligne.get("set_country_2", 0) or 0
 
-                # Extraction de l'année depuis la date 'YYYY-MM-DD'
                 saison = None
                 date_brute = ligne.get("date")
                 if date_brute is not None and not isinstance(date_brute, float):
