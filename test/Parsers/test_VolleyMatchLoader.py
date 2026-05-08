@@ -39,7 +39,6 @@ def test_volley_match_loader_combine_hommes_et_femmes(tmp_path):
     creer_csv_matchs_hommes(str(tmp_path))
     creer_csv_matchs_femmes(str(tmp_path))
     matchs = VolleyMatchLoader.load_all_match(str(tmp_path))
-    # 2 matchs hommes + 1 match femmes = 3 au total
     assert len(matchs) == 3
 
 
@@ -70,7 +69,6 @@ def test_volley_match_loader_vainqueur(tmp_path):
     """Vérifie que la méthode vainqueur_id() retourne le bon gagnant."""
     creer_csv_matchs_hommes(str(tmp_path))
     matchs = VolleyMatchLoader.load_all_match(str(tmp_path))
-    # USA 3 sets, ARG 0 sets → USA gagne
     assert matchs[0].vainqueur_id() == "USA"
 
 

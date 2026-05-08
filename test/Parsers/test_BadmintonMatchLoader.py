@@ -12,12 +12,11 @@ def creer_csv_matchs_badminton(dossier: str):
         writer.writerow(["tournament", "city", "country", "date", "tournament_type",
                          "round", "player_1", "player_2", "winner",
                          "game_1_score", "game_2_score", "game_3_score"])
-        # Match 1 : player_1 gagne
+        
         writer.writerow(["BWF World Tour", "Paris", "France", "2020-03-15",
                          "Super 750", "Final",
                          "Akane Yamaguchi", "Carolina Marin",
                          "Akane Yamaguchi", "21-18", "21-15", ""])
-        # Match 2 : player_2 gagne
         writer.writerow(["BWF World Tour", "Tokyo", "Japan", "2021-06-10",
                          "Super 750", "Semi-final",
                          "Viktor Axelsen", "Lee Zii Jia",

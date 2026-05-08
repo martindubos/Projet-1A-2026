@@ -69,7 +69,6 @@ def test_volleyball_player_loader_combine_hommes_et_femmes(tmp_path):
     creer_csv_joueurs_volley_hommes(str(tmp_path))
     creer_csv_joueurs_volley_femmes(str(tmp_path))
     joueurs = VolleyballPlayerLoader.load_all_player(str(tmp_path))
-    # 2 hommes + 1 femme = 3 au total
     assert len(joueurs) == 3
     assert "EGONU Paola Ogechi" in joueurs
     assert "FROMM Christian" in joueurs
