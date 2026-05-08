@@ -10,8 +10,10 @@ class Match:
         self.saison     = saison 
 
     def vainqueur_id(self):
-        if self.score1 > self.score2: return self.equipe1_id
-        if self.score2 > self.score1: return self.equipe2_id
+        if self.score1 > self.score2:
+            return self.equipe1_id
+        if self.score2 > self.score1:
+            return self.equipe2_id
         return None
 
 class MatchTennis(Match):

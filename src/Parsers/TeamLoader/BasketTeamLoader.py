@@ -78,13 +78,20 @@ class BasketTeamLoader():
                 total_wins = home_wins.add(away_wins, fill_value=0)
                 
                 for team_id, row in all_stats.iterrows():
-                    if team_id not in res: continue
-                    
+                    if team_id not in res:
+                        continue
+
                     pts = row["pts_scored"]
                     pts_allow = row["pts_allowed"]
-                    fga = row["fga"]; fgm = row["fgm"]; fg3m = row["fg3m"]
-                    fta = row["fta"]; reb = row["reb"]; ast = row["ast"]
-                    tov = row["tov"]; oreb = row["oreb"]; minutes = row["min"]
+                    fga = row["fga"]
+                    fgm = row["fgm"]
+                    fg3m = row["fg3m"]
+                    fta = row["fta"]
+                    reb = row["reb"]
+                    ast = row["ast"]
+                    tov = row["tov"]
+                    oreb = row["oreb"]
+                    minutes = row["min"]
                     games = row["games"]
                     wins = total_wins.get(team_id, 0)
                     

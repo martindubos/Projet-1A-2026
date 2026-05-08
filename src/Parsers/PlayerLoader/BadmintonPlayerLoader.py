@@ -74,7 +74,7 @@ class BadmintonPlayerLoader():
                 date_val = str(row['date'])
                 try:
                     saison = int(date_val[:4])
-                except:
+                except Exception:
                     saison = "Inconnue"
                 
                 if saison not in stats_par_joueur:
@@ -107,16 +107,20 @@ class BadmintonPlayerLoader():
                         
                     for g in ['game_1_score', 'game_2_score', 'game_3_score']:
                         score_raw = row.get(g)
-                        if pd.isna(score_raw) or score_raw == "": continue
+                        if pd.isna(score_raw) or score_raw == "":
+                            continue
                         try:
                             s1, s2 = map(int, str(score_raw).split('-'))
                             my_score = s1 if p == p1 else s2
                             opp_score = s2 if p == p1 else s1
                             st["Points marques"] += my_score
                             st["Points encaisses"] += opp_score
-                            if my_score > opp_score: st["Sets gagnes"] += 1
-                            elif my_score < opp_score: st["Sets perdus"] += 1
-                        except: pass
+                            if my_score > opp_score:
+                                st["Sets gagnes"] += 1
+                            elif my_score < opp_score:
+                                st["Sets perdus"] += 1
+                        except Exception:
+                            pass
 
             for saison, players in stats_par_joueur.items():
                 for p_name, st in players.items():

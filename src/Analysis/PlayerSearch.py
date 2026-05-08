@@ -1,1 +1,2 @@
-class PlayerSearch() :
+class PlayerSearch():
+    pass
