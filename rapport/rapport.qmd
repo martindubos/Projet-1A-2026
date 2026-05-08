@@ -16,6 +16,7 @@ format:
         \renewcommand{\contentsname}{Table des matières}
         \usepackage{fancyhdr}
         \usepackage{graphicx}
+        \usepackage{float}
         \pagestyle{fancy}
         \fancyhead[L]{\small\textit{Application de Statistiques Sportives}}
         \fancyhead[R]{\small\textit{ENSAI --- PTD 2025-2026}}
@@ -80,19 +81,25 @@ Zoeb Gouloumaly
 
 # Introduction {.unnumbered}
 
-Dans le cadre du cours de Traitement de Données de première année à l'ENSAI, nous avons développé une application Python de consultation et de visualisation de statistiques sportives. Ce projet nous a permis de mettre en pratique les concepts de programmation orientée objet, de manipulation de données et de travail collaboratif via Git.
+Dans le cadre du projet de Traitement de Données, nous avons développé une application Python permettant de charger, structurer et analyser des données sportives provenant de fichiers CSV. L'objectif du projet était de concevoir une architecture suffisamment générique pour pouvoir gérer plusieurs sports différents tout en conservant une structure commune et réutilisable.
 
-L'omniprésence des données dans le monde du sport moderne soulève une problématique centrale : comment concevoir une application modulaire capable d'agréger, de traiter et de restituer des données sportives hétérogènes de manière claire et accessible ?
+Notre application permet aujourd'hui de traiter des données de Tennis, Football, Basketball, Volleyball et Badminton. Les données utilisées proviennent de jeux de données fournis contenant des informations sur les joueurs, équipes, matchs, saisons ou encore statistiques de performance.
 
-L'objectif de notre application est de permettre à tout utilisateur de consulter facilement des statistiques sportives : rechercher un joueur ou une équipe, comparer deux entités, visualiser l'évolution d'un classement sur plusieurs saisons, ou encore explorer les résultats d'une compétition.
+Pour mener à bien notre projet, nous avons d'abord dû lire et nettoyer des fichiers CSV ayant des structures très différentes selon les sports. Ces données ont ensuite été transformées en objets Python afin d'obtenir un modèle de données commun à l'ensemble de l'application. Nous avons également mis en place différents calculs statistiques comme les classements, les taux de victoire, les confrontations directes ou certaines statistiques spécifiques aux différents sports. Enfin, les résultats peuvent être consultés directement depuis une interface en ligne de commande et certaines évolutions sont visualisées à l'aide de graphiques.
 
-Ce rapport s'organise de la manière suivante : le chapitre 1 présente le projet et les données utilisées, le chapitre 2 décrit la conception et l'architecture, le chapitre 3 détaille la réalisation et les choix techniques, le chapitre 4 présente les tests et leurs résultats, et le chapitre 5 conclut avec un bilan et des perspectives d'amélioration.
+L'un des principaux enjeux était de construire une architecture modulaire capable de s'adapter facilement à de nouveaux jeux de données. Pour cela, nous avons séparé le projet en plusieurs couches : modèle de données, chargement des fichiers CSV, calculs statistiques et interface utilisateur. Cette organisation nous a permis de mutualiser une grande partie du code tout en gardant des traitements spécifiques pour chaque sport lorsque cela était nécessaire. Enfin, la bibliothèque Pandas nous a été utile. Nous l'avons utilisé pour lire les CSV, nettoyer les données, gérer les valeurs manquantes et calculer les statistiques.
+
+Dans la suite de ce rapport, nous présenterons d'abord le contexte du projet, les besoins fonctionnels de l'application ainsi que les différents jeux de données utilisés. Nous détaillerons ensuite la conception de notre application, en expliquant la modélisation orientée objet, l'architecture générale du projet et les principaux choix technologiques réalisés. Nous reviendrons ensuite sur la réalisation du projet, notre organisation de travail et les principales difficultés rencontrées durant le développement. Enfin, nous présenterons les tests effectués, les résultats obtenus, les limites actuelles de l'application ainsi que les améliorations.
 
 # Présentation du projet
 
 ## Contexte
 
-*[À COMPLÉTER — reformuler le cahier des charges fourni par l'ENSAI]*
+Le projet nous a été soumis dans le cadre du cours de Traitement de Données de première année. L'objectif général était de concevoir une application Python capable de traiter des données sportives brutes --- typiquement des fichiers CSV --- pour en extraire des objets structurés représentant des matchs, des compétitions, des équipes ou des joueurs.
+
+Au-delà de la simple lecture de données, l'application devait permettre d'enrichir ces objets au fil du temps : ajouter les résultats d'une nouvelle compétition, recalculer les statistiques des joueurs ou des équipes en tenant compte des nouvelles données. L'idée était donc de produire un outil évolutif, pas un simple script de lecture figé.
+
+Le cahier des charges imposait également que l'application soit capable de fonctionner sur plusieurs jeux de données distincts. Certaines caractéristiques propres à un sport (surface en tennis, ligue en football, type de saison en basketball...) pouvaient être gérées de façon spécifique, mais les fonctionnalités de base --- chargement, recherche, affichage des statistiques --- devaient rester opérationnelles quel que soit le sport traité.
 
 Dans le cadre de ce projet, nous avons choisi de développer une application de consultation de statistiques multi-sports. Nous avons interprété le sujet en privilégiant la diversité des sports couverts et la richesse des fonctionnalités offertes à l'utilisateur. Notre application couvre cinq sports : le tennis (circuits ATP et WTA), le football (ligues européennes), le basketball (NBA), le badminton et le volleyball (Jeux Olympiques de Paris 2024).
 
@@ -102,21 +109,21 @@ Nous avons opté pour une interface en ligne de commande (CLI), conforme aux con
 
 L'application répond à huit grandes fonctionnalités :
 
-**F1 — Chargement des données :** L'utilisateur peut charger les données CSV d'un ou plusieurs sports. Les données sont ensuite sérialisées via pickle afin d'éviter de relire les fichiers à chaque lancement, ce qui réduit considérablement les temps de démarrage.
+**F1 --- Chargement des données :** L'utilisateur peut charger les données CSV d'un ou plusieurs sports. Les données sont ensuite sérialisées via pickle afin d'éviter de relire les fichiers à chaque lancement, ce qui réduit considérablement les temps de démarrage.
 
-**F2 — Recherche d'un joueur :** L'utilisateur peut rechercher un joueur par son nom (ou une partie de son nom). La recherche est insensible à la casse. En cas d'homonymes, l'application propose une liste et invite l'utilisateur à choisir. La fiche du joueur affiche ses statistiques globales calculées depuis les matchs (taux de victoire, aces, double-fautes pour le tennis, etc.).
+**F2 --- Recherche d'un joueur :** L'utilisateur peut rechercher un joueur par son nom (ou une partie de son nom). La recherche est insensible à la casse. En cas d'homonymes, l'application propose une liste et invite l'utilisateur à choisir. La fiche du joueur affiche ses statistiques globales calculées depuis les matchs (taux de victoire, aces, double-fautes pour le tennis, etc.).
 
-**F3 — Statistiques d'une équipe :** Pour les sports collectifs (football, basketball), l'utilisateur peut consulter les statistiques d'une équipe pour une saison donnée : classement, points, buts marqués et encaissés pour le football ; PPG, RPG, APG, Net Rating, eFG% pour le basketball.
+**F3 --- Statistiques d'une équipe :** Pour les sports collectifs (football, basketball), l'utilisateur peut consulter les statistiques d'une équipe pour une saison donnée : classement, points, buts marqués et encaissés pour le football ; PPG, RPG, APG, Net Rating, eFG% pour le basketball.
 
-**F4 — Confrontations directes (H2H) :** L'application affiche l'historique des confrontations entre deux joueurs ou deux équipes, avec le nombre de victoires de chaque côté et les éventuels matchs nuls.
+**F4 --- Confrontations directes (H2H) :** L'application affiche l'historique des confrontations entre deux joueurs ou deux équipes, avec le nombre de victoires de chaque côté et les éventuels matchs nuls.
 
-**F5 — Vue détaillée par compétition :** Pour le football, l'utilisateur peut afficher le classement complet d'un championnat pour une saison donnée. Pour le basketball, une vue détaillée de la NBA présente les conférences Est et Ouest, le play-in et les playoffs.
+**F5 --- Vue détaillée par compétition :** Pour le football, l'utilisateur peut afficher le classement complet d'un championnat pour une saison donnée. Pour le basketball, une vue détaillée de la NBA présente les conférences Est et Ouest, le play-in et les playoffs.
 
-**F6 — Évolution graphique :** L'application génère un graphique matplotlib montrant l'évolution du classement ou des points d'un joueur ou d'une équipe saison par saison.
+**F6 --- Évolution graphique :** L'application génère un graphique matplotlib montrant l'évolution du classement ou des points d'un joueur ou d'une équipe saison par saison.
 
-**F7 — Module Volleyball JO 2024 :** Un module dédié permet de consulter les résultats de la compétition de volleyball aux Jeux Olympiques de Paris 2024, les statistiques par équipe (ratio de sets, profil des victoires), les profils des athlètes (taille par pays, distribution des âges) et l'encadrement technique.
+**F7 --- Module Volleyball JO 2024 :** Un module dédié permet de consulter les résultats de la compétition de volleyball aux Jeux Olympiques de Paris 2024, les statistiques par équipe (ratio de sets, profil des victoires), les profils des athlètes (taille par pays, distribution des âges) et l'encadrement technique.
 
-**F8 — Ajout de jeux de données :** L'utilisateur peut ajouter un nouveau jeu de données CSV via le menu, sans modifier le code source.
+**F8 --- Ajout de jeux de données :** L'utilisateur peut ajouter un nouveau jeu de données CSV via le menu, sans modifier le code source.
 
 Les contraintes techniques imposées sont les suivantes : langage Python 3, paradigme orienté objet, gestion de versions avec Git et GitHub, tests unitaires, données en entrée sous forme de fichiers CSV uniquement, interface en ligne de commande.
 
@@ -126,9 +133,9 @@ Notre application exploite cinq jeux de données distincts :
 
 **Tennis :** Les données proviennent du dépôt public de Jeff Sackmann (tennis_atp / tennis_wta). Elles contiennent les résultats de la saison 2024, avec 443 joueurs ATP, plusieurs centaines de joueuses WTA, et plusieurs milliers de matchs. Chaque match contient des statistiques détaillées de service (aces, double-fautes, premier service, balles de break).
 
-**Football :** Les données sont issues de la European Soccer Database (Kaggle), couvrant les principales ligues européennes sur plusieurs saisons. La base contient plusieurs milliers de joueurs, d'équipes et de matchs, répartis sur plusieurs ligues (Premier League, La Liga, Bundesliga, Serie A, Ligue 1…).
+**Football :** Les données sont issues de la European Soccer Database (Kaggle), couvrant les principales ligues européennes sur plusieurs saisons. La base contient plusieurs milliers de joueurs, d'équipes et de matchs, répartis sur plusieurs ligues (Premier League, La Liga, Bundesliga, Serie A, Ligue 1...).
 
-**Basketball :** Les données NBA proviennent de Kaggle et couvrent plusieurs saisons. Elles incluent les résultats des matchs de saison régulière et des playoffs, ainsi que des statistiques avancées par équipe (Net Rating, eFG%, Pace…).
+**Basketball :** Les données NBA proviennent de Kaggle et couvrent plusieurs saisons. Elles incluent les résultats des matchs de saison régulière et des playoffs, ainsi que des statistiques avancées par équipe (Net Rating, eFG%, Pace...).
 
 **Badminton :** Un jeu de données contenant les joueurs et les résultats de matchs internationaux.
 
@@ -140,139 +147,164 @@ Ces jeux de données ont été choisis pour leur richesse, leur disponibilité e
 
 ## Modélisation
 
-Notre modèle objet s'articule autour de quatre classes principales.
+![Diagramme de classes UML](Diagramme uml.png){fig-align="center" fig-pos="H" width="95%"}
 
-La classe **Player** représente un joueur, quelle que soit la discipline. Elle stocke les informations communes : identifiant, nom, prénom, date de naissance, pays, taille, poids, position et genre. Elle possède un dictionnaire `statistiques` qui associe à chaque saison un ensemble de statistiques calculées.
+Notre modèle objet repose sur quatre classes principales.
 
-La classe **Team** représente une équipe ou un pays selon le sport. Elle contient le nom, le nom court et un dictionnaire de statistiques par saison.
+La classe **Player** représente un joueur, toutes disciplines confondues. Elle regroupe les informations essentielles (identifiant, nom, prénom, date de naissance, pays, taille, poids, position et genre) et contient un dictionnaire de statistiques permettant de stocker, par saison, les données calculées.
 
-La classe **Match** est la classe de base pour tous les matchs. Elle stocke les identifiants des deux entités qui s'affrontent, les scores, la date et la saison. Elle expose une méthode `vainqueur_id()` qui retourne l'identifiant du vainqueur (ou `None` en cas de match nul). Quatre sous-classes héritent de Match en ajoutant les attributs spécifiques à chaque sport :
+La classe **Team** représente une équipe ou un pays selon le sport. Elle contient les informations d'identification (nom, nom court) ainsi qu'un dictionnaire de statistiques par saison.
 
-- **MatchTennis** : surface, tour, tournoi, circuit (ATP/WTA), statistiques de service du vainqueur et du perdant
-- **MatchFootball** : identifiant de la ligue, compositions des équipes domicile et extérieur
-- **MatchBasketball** : type de saison (saison régulière, playoffs, play-in)
-- **MatchVolley** : genre (H/F) et phase de la compétition
+La classe **Match** constitue la base commune à tous les matchs. Elle stocke les identifiants des deux adversaires, les scores, la date et la saison. Elle fournit notamment la méthode `vainqueur_id()`, qui retourne le gagnant ou `None` en cas d'égalité. Quatre sous-classes spécialisées héritent de cette classe et ajoutent des attributs propres à chaque sport :
 
-La classe **Sport** est l'agrégateur central. Elle contient les dictionnaires de joueurs et d'équipes (indexés par identifiant) ainsi que la liste des matchs. Elle expose des méthodes de recherche (`get_joueur_matches`, `get_equipe_matches`) et de calcul du classement (`calculer_classement`).
+- **MatchTennis** (surface, tournoi, circuit, statistiques de service)
+- **MatchFootball** (ligue et compositions des équipes)
+- **MatchBasketball** (type de saison : régulière, playoffs, play-in)
+- **MatchVolley** (genre et phase de compétition)
 
-*[À COMPLÉTER — insérer ici le diagramme de classes UML et le diagramme de cas d'utilisation]*
+Enfin, la classe **Sport** joue le rôle d'agrégateur central. Elle regroupe l'ensemble des joueurs et des équipes sous forme de dictionnaires indexés par identifiant, ainsi que la liste des matchs. Elle fournit des méthodes de recherche (par exemple les matchs d'un joueur ou d'une équipe) et de calcul de classement.
 
 ## Architecture générale
 
-L'application est organisée en quatre couches :
+L'application est organisée en quatre couches distinctes.
 
-La **couche Interface** (`__main__.py`) gère l'interaction avec l'utilisateur : affichage des menus, saisie des entrées, appel aux fonctions d'affichage et de visualisation. C'est le point d'entrée unique de l'application.
+La **couche Interface** (`__main__.py`) gère l'interaction avec l'utilisateur : affichage des menus, saisie des commandes et appel des différentes fonctionnalités d'affichage et de visualisation. Elle constitue le point d'entrée unique de l'application.
 
-La **couche Analyse** (`src/Analysis/`) regroupe les modules d'analyse avancée, notamment le module GoatFinder qui permet de comparer les performances des meilleurs joueurs.
+La **couche Analyse** (`src/Analysis/`) regroupe les traitements plus avancés, notamment le module GoatFinder, qui permet de comparer les performances des meilleurs joueurs.
 
-La **couche Chargement** (`src/Parsers/`) est responsable de la lecture et du parsing des fichiers CSV. Elle est organisée en trois familles de loaders : `MatchLoader`, `PlayerLoader` et `TeamLoader`. Chaque famille dispose d'un dispatcher principal qui délègue au loader spécifique au sport (ex. `TennisMenPlayerLoader`, `FootballPlayerLoader`…).
+La **couche Chargement** (`src/Parsers/`) est chargée de la lecture et du parsing des fichiers CSV. Elle est structurée en trois familles de loaders : `MatchLoader`, `PlayerLoader` et `TeamLoader`. Chacune dispose d'un module principal qui redirige vers des loaders spécifiques à chaque sport (par exemple `FootballPlayerLoader` ou `TennisMenPlayerLoader`).
 
-La **couche Modèle** (`src/Model/`) contient les classes métier : `Player`, `Team`, `Match` et ses sous-classes, `Sport`.
+La **couche Modèle** (`src/Model/`) contient les classes principales du domaine : `Player`, `Team`, `Match` et ses sous-classes, ainsi que `Sport`, qui sert à regrouper l'ensemble des données.
 
-Le flux de données est le suivant : les fichiers CSV sont lus par les Parsers qui créent des objets du Modèle, lesquels sont regroupés dans un objet `Sport`. Cet objet est ensuite sérialisé via pickle pour être rechargé rapidement lors des sessions suivantes. Lors de la consultation, `__main__.py` charge l'objet depuis le pickle et l'interroge.
-
-En termes de métriques, le projet compte environ *[À COMPLÉTER]* lignes de code réparties sur *[À COMPLÉTER]* fichiers Python.
+Le flux de données suit donc le schéma suivant : les fichiers CSV sont d'abord lus par les Parsers, qui créent les objets du Modèle. Ces objets sont ensuite regroupés dans une instance de `Sport`, elle-même sérialisée avec pickle afin de permettre un rechargement rapide. Lors de l'exécution, `__main__.py` charge directement cet objet et l'utilise pour toutes les interactions avec l'utilisateur.
 
 ## Choix technologiques
 
-**Python 3** est le langage imposé par le cahier des charges. Il offre un large écosystème de bibliothèques pour le traitement de données.
+Le projet est réalisé en **Python 3**, qui est le langage demandé dans le cahier des charges. Python est utilisé ici car il propose beaucoup d'outils déjà prêts pour travailler sur des données.
 
-**pandas** a été choisi pour la lecture et la manipulation des fichiers CSV. Il gère nativement les valeurs manquantes (NaN), facilite les agrégations et les filtres, et est le standard de facto pour la data en Python.
+On utilise **Pandas** pour lire et manipuler les fichiers CSV. C'est très pratique car il permet de gérer facilement les données manquantes, de filtrer les informations et de faire des calculs simples sur les données sans avoir à tout coder soi-même.
 
-**matplotlib** a été retenu pour la visualisation. Il permet de générer des graphiques en barres, des courbes d'évolution, des histogrammes et des camemberts. Son mode non-interactif (`Agg`) permet également de sauvegarder les figures en PNG.
+Pour les graphiques, on a choisi **Matplotlib**. Il permet de créer différents types de visualisations comme des courbes, des histogrammes ou des diagrammes en barres. Les graphiques peuvent aussi être enregistrés sous forme d'images, ce qui est utile pour les rapports.
 
-**pickle** est utilisé pour la sérialisation des objets Python. Il permet de mettre en cache les données chargées depuis les CSV, évitant ainsi de les relire à chaque lancement — ce qui représente un gain de temps significatif sur des fichiers de plusieurs milliers de lignes.
+On utilise également **Pickle** pour sauvegarder les données déjà chargées. Cela évite de relire les fichiers CSV à chaque fois, ce qui fait gagner beaucoup de temps, surtout quand les fichiers sont volumineux.
 
-**Git / GitHub** est utilisé pour la gestion de versions et la collaboration au sein du groupe, conformément aux exigences du projet.
+Pour travailler en groupe et garder un historique du code, on utilise **Git et GitHub**, comme demandé dans le projet.
 
-**pytest** est le framework utilisé pour les tests unitaires, en complément de la bibliothèque standard `unittest`.
+Enfin, les tests sont réalisés avec **pytest**, qui permet de vérifier automatiquement que le code fonctionne correctement, en complément des outils de test de base de Python.
 
 # Réalisation
 
 ## Organisation du travail
 
-*[À COMPLÉTER — répartition des tâches entre les membres du groupe]*
+Nous avons avancé sur le projet de manière assez progressive, en nous répartissant naturellement les tâches selon les besoins et les affinités de chacun. Certains membres se sont davantage occupés du chargement et du nettoyage des données, tandis que d'autres ont surtout travaillé sur les statistiques, les visualisations ou l'interface utilisateur. Même si chacun avait ses parties principales, nous avons régulièrement relu et testé le travail des autres afin de garder une application cohérente dans son ensemble.
 
-Le développement a été organisé autour du dépôt GitHub commun. *[À COMPLÉTER — décrire le workflow : branches, fréquence des commits, revues de code, outils de communication (Discord, etc.)]*
-
-L'analyse du dépôt Git montre *[À COMPLÉTER — nombre de commits, contributions par auteur]*.
+Les contributions au projet ont été réparties entre le développement des fonctionnalités, les corrections de bugs, les tests et la restructuration du code.
 
 ## Développement
 
-Plusieurs choix d'implémentation méritent d'être soulignés.
+L'utilisateur peut dans un premier temps charger un ou plusieurs jeux de données depuis des fichiers CSV.
 
-Le **pattern Dispatcher** est au cœur de notre architecture de chargement. Chaque famille de loaders dispose d'une méthode statique `load_all_*` qui reçoit le nom du sport et délègue au loader spécifique. Par exemple, `PlayerLoader.load_all_player("Tennis", dossier)` appelle successivement `TennisMenPlayerLoader` et `TennisWomenPlayerLoader` et fusionne leurs résultats. Ce pattern rend l'ajout d'un nouveau sport très simple : il suffit de créer un nouveau loader et d'ajouter un cas dans le dispatcher, sans toucher au reste du code.
+![Interface de chargement des données](1.png){fig-align="center" fig-pos="H" width="85%"}
 
-**L'héritage pour les matchs** permet de traiter tous les matchs de manière uniforme dans la classe `Sport`, tout en conservant les attributs spécifiques à chaque discipline. La méthode `calculer_classement()` de `Sport` parcourt tous les matchs (quelle que soit leur sous-classe) et applique la même règle de points (3 points pour une victoire, 1 point par équipe pour un nul).
+Lors du chargement, les données sont lues avec Pandas, nettoyées puis converties en objets Python afin d'être manipulées plus facilement dans le reste de l'application. Une fois les données traitées, elles sont sauvegardées localement avec Pickle afin d'éviter de relire les fichiers CSV à chaque exécution du programme.
 
-**La persistance par pickle** a été mise en place pour améliorer l'expérience utilisateur. Le chargement initial des données depuis les CSV peut prendre plusieurs secondes sur les gros jeux de données (football, basketball). Une fois sérialisés, les objets `Sport` sont rechargés en une fraction de seconde.
+Différentes statistiques sur les joueurs, équipes et matchs vont pouvoir être consultées. Déjà, plusieurs statistiques globales sont calculées automatiquement à partir des matchs chargés.
 
-**La recherche par sous-chaîne** (`nom.lower() in nom_complet().lower()`) permet une recherche partielle et insensible à la casse. En cas de résultats multiples, l'application affiche la liste et invite l'utilisateur à choisir, gérant ainsi les cas d'homonymes.
+![Exemple : Nom : Villarreal CF, Saison 2008/2009](2.png){fig-align="center" fig-pos="H" width="85%"}
 
-*[À COMPLÉTER — décrire d'autres parties importantes du développement spécifiques à votre groupe]*
+Nous avons notamment implémenté le calcul du nombre de matchs joués, du taux de victoire, des confrontations directes entre deux joueurs ou équipes ainsi qu'un système de classement basé sur les résultats des rencontres.
+
+![Exemple : Historique Confrontation Rafael Nadal vs Novak Djokovic](3.png){fig-align="center" fig-pos="H" width="85%"}
+
+Ce classement attribue trois points pour une victoire et un point en cas de match nul. Il peut être affiché de manière globale ou filtré par saison.
+
+![Exemple : Classement FRANCE Ligue 1 --- Saison 2012/2013](4.png){fig-align="center" fig-pos="H" width="85%"}
+
+Certaines statistiques spécifiques ont également été ajoutées pour le tennis. À partir des données ATP et WTA, l'application calcule par exemple le nombre de tournois remportés par chaque joueur ainsi que leur meilleur résultat en Grand Chelem.
+
+![Exemple : Stan Wawrinka, Saison : 2024](5.png){fig-align="center" fig-pos="H" width="85%"}
+
+Ces statistiques sont directement stockées dans les objets joueurs afin d'être facilement accessibles depuis l'interface.
+
+Nous avons également ajouté plusieurs filtres afin de rendre l'exploration des données plus flexible. Il est par exemple possible de filtrer certains classements par saison ou par sexe lorsque les données le permettent.
+
+![Exemple : Villarreal CF](6.png){fig-align="center" fig-pos="H" width="85%"}
+
+Enfin, l'application propose une partie visualisation reposant sur la bibliothèque Matplotlib. L'utilisateur peut afficher l'évolution des points ou du classement d'un joueur ou d'une équipe au fil des saisons. Ces graphiques permettent d'obtenir une représentation plus claire des performances et facilitent l'analyse des résultats sur plusieurs années.
+
+![Exemple : Évolution nombre de points du Real Madrid CF](7.png){fig-align="center" fig-pos="H" width="85%"}
+
+L'ensemble de ces fonctionnalités repose sur une architecture modulaire, via l'utilisation d'une structure commune basée sur les classes `Player`, `Team`, `Match` et `Sport`.
+
+Nous avons également développé plusieurs modules spécifiques selon les sports. Pour le tennis, nous avons intégré des statistiques avancées comme les aces, les doubles fautes ou les pourcentages de premières balles.
+
+![Exemple : Novak Djokovic, Saison : 2024](8.png){fig-align="center" fig-pos="H" width="85%"}
+
+Pour le basketball, nous avons ajouté des statistiques collectives avancées comme le Net Rating ou le eFG%.
+
+![Exemple : Golden State Warriors, Saison 2022-2023](9.png){fig-align="center" fig-pos="H" width="85%"}
+
+| Statistique | Définition |
+|:--|:--|
+| PPG / RPG / APG | Moyennes de Points, Rebonds et Passes par match |
+| TS% | True Shooting % (efficacité globale incluant les lancers francs) |
+| Net Rating | Différence de points marqués/encaissés sur 100 possessions |
+| OffRtg | Points marqués pour 100 possessions |
+| DefRtg | Points encaissés pour 100 possessions |
+| eFG% | Efficacité au tir (ajuste la valeur des tirs à 3 points) |
+| Pace | Nombre de possessions estimées par match (48 minutes) |
+| AST/TOV | Ratio Passes décisives / Pertes de balle |
+
+: Légende des statistiques basketball {tbl-colwidths="[25,75]"}
+
+Enfin, pour le volleyball des Jeux Olympiques 2024, nous avons développé des visualisations et des statistiques spécifiques sur les équipes nationales et les profils des joueurs.
+
+![Exemple : Distribution de la taille moyenne par pays (Hommes), JO 2024](10.png){fig-align="center" fig-pos="H" width="85%"}
 
 ## Difficultés rencontrées
 
-**La gestion des données manquantes** a constitué notre première difficulté. Les fichiers CSV contiennent de nombreuses valeurs manquantes (NaN) pour des champs comme la date de naissance, la taille ou certaines statistiques de match. Nous avons dû systématiquement utiliser `pd.isna()` pour détecter ces valeurs et leur substituer `None` lors de la construction des objets Python, afin d'éviter des erreurs à l'exécution.
+Un des premiers problèmes rencontrés venait de la qualité des données. Les fichiers CSV n'étaient pas toujours bien organisés, ce qui nous a obligés à nettoyer et harmoniser certaines informations, par exemple les dates ou les codes pays. On a aussi beaucoup utilisé la bibliothèque Numpy pour repérer les valeurs manquantes (NaN), ce qui nous a évité pas mal d'erreurs dans les calculs et les conversions.
 
-**La gestion du répertoire de travail** a posé un problème récurrent. Notre application utilise des chemins relatifs (`data/`, `objets/`) pour accéder aux fichiers. Selon l'environnement de lancement (bouton Run de VS Code, terminal, cloud Onyxia), le répertoire courant n'était pas toujours celui du projet, ce qui rendait les fichiers introuvables et produisait silencieusement des dictionnaires de joueurs vides. Nous avons résolu ce problème en ajoutant `os.chdir(os.path.dirname(os.path.abspath(__file__)))` au début de `__main__.py`, forçant ainsi le répertoire courant à être celui contenant le script.
+Sur la partie conception, il a fallu bien réfléchir à la manière d'organiser le code. L'idée était d'avoir une classe générale `Match` commune à tous les sports, tout en laissant chaque sport gérer ses particularités. On a ensuite ajouté un système de type Factory pour charger les données. C'était un peu compliqué au début, mais au final ça rend le projet beaucoup plus flexible, puisqu'on peut ajouter un nouveau sport sans tout modifier. De plus, pour la recherche des statistiques par joueur/équipe, nous avons adapté notre programme pour que l'utilisateur puisse rechercher une partie du nom de ceux-ci.
 
-**L'hétérogénéité des formats CSV** a nécessité un effort de parsing spécifique pour chaque sport. Les noms de colonnes, les types de données, les formats de dates et les structures de saisons diffèrent d'un jeu de données à l'autre. La création d'un loader dédié par sport nous a permis d'isoler cette complexité.
-
-**La compatibilité des fichiers pickle** a également posé problème. Lorsque la définition d'une classe Python est modifiée après la création d'un fichier pickle, la désérialisation peut produire des objets avec des attributs manquants. La solution a été de supprimer les fichiers pickle et de recharger les données depuis les CSV.
-
-*[À COMPLÉTER — ajouter d'autres difficultés rencontrées par votre groupe]*
+Enfin, ce projet nous a aussi fait prendre conscience de certains problèmes liés aux données et à leur traitement. Par exemple, en football, les classements mélangeaient plusieurs compétitions, ce qui faussait les résultats. On a donc dû séparer correctement les ligues pour obtenir quelque chose de cohérent. On a également dû utiliser Pickle pour éviter de recalculer les mêmes données à chaque fois, ce qui rend l'application beaucoup plus rapide à l'usage et plus agréable à utiliser.
 
 # Tests et validation
 
 ## Stratégie de test
 
-Nous avons adopté une approche de tests unitaires avec pytest et unittest. Chaque module important dispose de son propre fichier de test, organisé dans le répertoire `test/` qui reproduit la structure de `src/`.
+Nous avons adopté une approche de tests unitaires basée sur pytest, afin de vérifier le bon fonctionnement des différentes parties de l'application de manière isolée. L'objectif est de s'assurer que chaque composant fonctionne correctement, indépendamment du reste du programme.
 
-| Fichier de test | Module couvert |
-|---|---|
-| `test/Common/test_utils.py` | Utilitaires communs |
-| `test/Model/test_Match.py` | Classe `Match` et sous-classes |
-| `test/Model/test_Player.py` | Classe `Player` |
-| `test/Model/test_Team.py` | Classe `Team` |
-| `test/Parsers/test_BadmintonMatchLoader.py` | Loader matchs badminton |
-| `test/Parsers/test_BadmintonPlayerLoader.py` | Loader joueurs badminton |
-| `test/Parsers/test_FootballPlayerLoader.py` | Loader joueurs football |
-| `test/Parsers/test_VolleyMatchLoader.py` | Loader matchs volleyball |
-| `test/Parsers/test_VolleyballPlayerLoader.py` | Loader joueurs volleyball |
+Les tests sont organisés dans un dossier `test/` qui reprend la même structure que le dossier `src/`, ce qui facilite la compréhension et la navigation dans le projet.
 
-*[À COMPLÉTER — décrire plus précisément la stratégie et les données de test utilisées]*
+Les modules couverts par les tests sont :
 
-## Résultats des tests
+- `Common/test_utils.py` pour les fonctions utilitaires
+- `Model/test_Match.py` pour la classe `Match` et ses variantes
+- `Model/test_Player.py` pour la classe `Player`
+- `Model/test_Team.py` pour la classe `Team`
+- les modules de parsing pour le badminton, le football et le volleyball (matchs et joueurs)
 
-*[À COMPLÉTER — résultats de `pytest test/ -v`]*
+Les tests des classes du modèle utilisent des objets créés directement dans les fichiers de test avec des valeurs simples. Cela permet de vérifier les comportements principaux comme le calcul du vainqueur, l'initialisation des attributs ou la gestion des cas particuliers (égalité, valeurs par défaut, etc.).
 
-*[À COMPLÉTER — insérer ici la figure des résultats de tests]*
+Pour les parsers, des fichiers CSV simplifiés sont utilisés afin de tester uniquement la lecture et la transformation des données.
+
+Cette approche permet de sécuriser les fonctionnalités principales du projet et de limiter les erreurs lors des évolutions du code.
+
+## Quelques résultats
+
+Les tests réalisés montrent que l'application répond correctement aux principales fonctionnalités attendues. Les données sont correctement chargées et transformées en objets exploitables, tandis que les statistiques calculées restent cohérentes avec les résultats présents dans les jeux de données.
+
+L'application permet notamment d'obtenir des classements fiables, d'afficher des fiches détaillées de joueurs ou d'équipes, de consulter des confrontations directes et de générer des graphiques d'évolution selon les saisons. Les temps de chargement ont également été nettement améliorés grâce à pickle.
 
 ## Limites de l'application
 
-**L'interface CLI uniquement :** L'application fonctionne exclusivement en mode terminal. Une interface graphique ou web (par exemple avec Streamlit) rendrait l'outil plus accessible à des utilisateurs non techniques.
-
-**Des données figées :** Les loaders sont codés pour des fichiers nommés précisément (ex. `atp_matches_2024.csv`). L'application ne se met pas à jour automatiquement.
-
-**La sérialisation pickle fragile :** Toute modification d'une classe Python après la création d'un fichier pickle peut rendre ce dernier incompatible. Une solution plus robuste serait d'utiliser SQLite ou JSON, avec un système de versionnage.
-
-**La classe PlayerSearch non implémentée :** Le fichier `src/Analysis/PlayerSearch.py` contient une classe vide. Toute la logique de recherche est concentrée dans `__main__.py`, ce qui contrevient au principe de séparation des responsabilités.
-
-**Le fichier `__main__.py` trop long :** Avec plus de 1 200 lignes, ce fichier mêle logique d'affichage, navigation dans les menus et calculs. Une refactorisation en modules distincts (Vue / Contrôleur) améliorerait la lisibilité et la maintenabilité.
-
-**La couverture de tests partielle :** Le fichier `__main__.py` n'est pas couvert par des tests unitaires, car il implique des interactions utilisateur difficiles à simuler automatiquement.
-
-*[À COMPLÉTER — ajouter d'autres limites identifiées]*
+Même si l'application fonctionne correctement sur l'ensemble des fonctionnalités prévues, elle présente encore certaines limites. Les performances restent sensibles à la taille des fichiers CSV, en particulier pour les jeux de données les plus volumineux comme ceux du football ou du basketball. Par ailleurs, certaines données disponibles dans les fichiers ne sont pas encore exploitées, ce qui laisse de la marge pour enrichir les analyses et les statistiques proposées. Enfin, l'application repose uniquement sur une interface en ligne de commande. Cela la rend fonctionnelle mais moins accessible pour des utilisateurs non habitués à ce type d'environnement, et limite son côté grand public.
 
 # Conclusion
 
-*[À COMPLÉTER — bilan personnel et collectif]*
+Ce projet nous a permis de construire une application Python complète, allant de la lecture de données sportives jusqu'à leur analyse et leur visualisation. Nous avons travaillé sur cinq sports différents, en essayant de proposer des fonctionnalités utiles tout en respectant les contraintes du projet : programmation orientée objet, utilisation de Git, tests unitaires et interface en ligne de commande.
 
-Ce projet nous a permis de développer une application Python complète de bout en bout, de la lecture des données brutes jusqu'à leur visualisation graphique. Nous avons couvert cinq sports différents avec des fonctionnalités variées, en respectant les contraintes imposées (POO, Git, tests unitaires, interface CLI).
+Sur le plan technique, ce travail nous a permis de progresser sur des outils importants comme pandas pour la gestion des données, matplotlib pour les graphiques et Git pour le travail en groupe. Il nous a aussi appris à mieux structurer un projet en plusieurs parties bien séparées, ce qui rend le code plus clair et plus facile à faire évoluer.
 
-Sur le plan technique, nous avons acquis une maîtrise concrète de pandas pour la manipulation de données, de matplotlib pour la visualisation, et de Git pour le travail collaboratif. La conception en couches (Parsers / Model / Analysis / Interface) nous a appris l'importance de la séparation des responsabilités pour produire un code maintenable et extensible.
-
-Si nous avions disposé de plus de temps, nous aurions souhaité développer une interface web avec Streamlit, intégrer une base de données SQLite pour remplacer les fichiers pickle, et améliorer significativement la couverture de tests.
-
-*[À COMPLÉTER — mot de fin]*
+Finalement, ce projet a été une expérience très formatrice. Il nous a permis de faire le lien entre ce que nous voyons en cours et la réalisation concrète d'une application complète. On a aussi compris qu'un projet fonctionne vraiment bien quand la structure est pensée dès le début et quand le travail est bien organisé entre les membres de l'équipe.
